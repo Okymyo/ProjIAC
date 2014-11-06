@@ -83,3 +83,21 @@ teclado_fim:
 	POP 	R2					; POP POP POP POP!
 	POP 	R1					; POP
 	RET
+	
+	
+escrever_pixel: 				; escrever_pixel(linha,coluna)
+	MOV R1, linha
+	MOV R2, coluna
+	PUSH R3
+	MOV R3, R2
+	
+	MUL R1, 4      				; multiplicar 4 a R1
+	ADD R1, 8000H 				; somar 8000H a R1
+	DIV R3, 8000H  				; dividir 8000H a R3
+	ADD R1, R3	   				; somar R3 a R1
+	MOD R2, 8      				; resto da divisão de R2 por 8
+	
+	POP R3
+	RET
+
+	CALL escrever_pixel
