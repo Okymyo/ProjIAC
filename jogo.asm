@@ -10,7 +10,7 @@
 ; **********************************************************************
 
 BUFFER	EQU	100H				; endereço de memória onde se guarda a tecla		
-LINHA	EQU	8000H					; correspondente à linha 1 antes do ROL
+LINHA	EQU	8000H				; correspondente à linha 1 antes do ROL
 
 PSCR_I 	EQU 8000H
 PSCR_F	EQU 807FH
@@ -23,8 +23,8 @@ PIN		EQU 0E000H				; endereço do porto de E/S do teclado
 ; *********************************************************************************
 
 PLACE		1000H
-pilha:		TABLE 100H		; espaço reservado para a pilha 
-SP_inicial:					; endereço para inicializar SP
+pilha:		TABLE 100H			; espaço reservado para a pilha 
+SP_inicial:						; endereço para inicializar SP
 
 ; *********************************************************************************
 ; * Dados
