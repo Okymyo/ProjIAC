@@ -14,6 +14,9 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
+# Static files
+jogo.cmod
+
 # =========================
 # Operating System Files
 # =========================
