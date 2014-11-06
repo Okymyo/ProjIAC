@@ -1,16 +1,8 @@
 ; *********************************************************************
 ; * P R O J E C T O 
 ; *********************************************************************
-
-; *********************************************************************
-; *
-; * Modulo: 	lab5.asm
-; * Descrição : Exemplifica o acesso a um teclado (Push Matrix).
-; *		Lê uma linha do teclado, verificando se há alguma tecla
-; *		premida nessa linha.
-; *
-; * Nota : 	Observar a forma como se acede aos portos de E/S de 8 bits
-; *		através da instrução MOVB
+;
+;
 ; *********************************************************************
 
 ; **********************************************************************
@@ -18,7 +10,7 @@
 ; **********************************************************************
 
 BUFFER	EQU	100H				; endereço de memória onde se guarda a tecla		
-LINHA	EQU	8000H				; correspondente à linha verificada anteriormente
+LINHA	EQU	8000H					; correspondente à linha 1 antes do ROL
 
 PSCR_I 	EQU 8000H
 PSCR_F	EQU 807FH
@@ -59,17 +51,17 @@ teclado:
 	PUSH	R7
 	MOV 	R1, BUFFER			; R1 com endereço de memória BUFFER 
 	MOV		R2, POUT2			; R2 com o endereço do periférico
-	MOV 	R3, PIN				; ---
-	MOV		R4, 0				; R3 vazio, indica a coluna
-	MOV		R5, LINHA			; R4 guarda a linha verificada anteriormente
-	MOV		R6, 0   			; R5 indica o caracter premido
-	MOV 	R7, 10				; R6 com o valor a comparar
+	MOV 	R3, PIN				; R3 com endereço de input do teclado
+	MOV		R4, 0				; R4 vazio, indica a coluna
+	MOV		R5, LINHA			; R5 guarda a linha verificada anteriormente
+	MOV		R6, 0   			; R6 indica o caracter premido
+	MOV 	R7, 10				; R7 com o valor a comparar
 teclado_ciclo:
-	ROL		R4, 1				; alterar linha para verificar a seguinte
+	ROL		R5, 1				; alterar linha para verificar a seguinte
+	CMP 	R5, R7				; comparar para saber se ainda "existe" a linha
+	JGE		teclado_fim			; se a linha a verificar for maior que 4, terminar
 	MOVB 	[R2], R5			; escrever no periférico de saída
 	MOVB 	R4, [R3]			; ler do periférico de entrada
-	CMP 	R5, R7				; comparar 
-	JGE		teclado_fim			; se a linha a verificar for maior que 4, terminar
 	AND 	R4, R4				; afectar as flags
 	JZ 		teclado_ciclo		; nenhuma tecla premida
 teclado_linha:
@@ -82,6 +74,8 @@ teclado_coluna:
 	JNZ		teclado_coluna		; se ainda não for zero, ainda há mais a incrementar
 	SUB		R6, 5				; incrementámos 1x4 e 1x1 a mais
 	MOVB	[R1], R6			; escrever para memoria a tecla
+	; este MOVB tem de ser movido para teclado_fim, para fazer update mesmo quando
+	; nenhuma tecla é premida. Apenas está aqui por motivos de teste!
 teclado_fim:
 	POP 	R7					; POP
 	POP		R6					; POP?
