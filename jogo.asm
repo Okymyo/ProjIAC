@@ -54,7 +54,7 @@ teclado:
 	MOV 	R3, PIN				; R3 com endereço de input do teclado
 	MOV		R4, 0				; R4 vazio, indica a coluna
 	MOV		R5, LINHA			; R5 guarda a linha verificada anteriormente
-	MOV		R6, 0   			; R6 indica o caracter premido
+	MOV		R6, 0F0H   			; R6 indica o caracter premido, F0 indica 'vazio'
 	MOV 	R7, 10				; R7 com o valor a comparar
 teclado_ciclo:
 	ROL		R5, 1				; alterar linha para verificar a seguinte
@@ -72,11 +72,9 @@ teclado_coluna:
 	ADD		R6, 1
 	SHR 	R4, 1
 	JNZ		teclado_coluna		; se ainda não for zero, ainda há mais a incrementar
-	SUB		R6, 5				; incrementámos 1x4 e 1x1 a mais
-	MOVB	[R1], R6			; escrever para memoria a tecla
-	; este MOVB tem de ser movido para teclado_fim, para fazer update mesmo quando
-	; nenhuma tecla é premida. Apenas está aqui por motivos de teste!
+	SUB		R6, 0F5H			; incrementámos 1x4 e 1x1 a mais, e o F inicial de 'vazio'
 teclado_fim:
+	MOVB	[R1], R6			; escrever para memoria a tecla que pode ser nulo (F0)
 	POP 	R7					; POP
 	POP		R6					; POP?
 	POP 	R5					; POP POP POP
