@@ -84,7 +84,6 @@ teclado_fim:
 	POP 	R1					; POP
 	RET
 	
-	
 escrever_pixel: 				; escrever_pixel(linha,coluna)
 	MOV R1, linha
 	MOV R2, coluna
@@ -99,5 +98,6 @@ escrever_pixel: 				; escrever_pixel(linha,coluna)
 	
 	POP R3
 	RET
-
-	CALL escrever_pixel
+	
+	
+	
