@@ -166,6 +166,7 @@ escrever_fim:
 	RET
 
 
+
 	
 escrever_pixel2: 				; escrever_pixel(linha,coluna)
 	;R1 linha
@@ -194,4 +195,42 @@ escrever_pixel2: 				; escrever_pixel(linha,coluna)
 
 prototipo_mascaras:
 	
+escrever_boneco:
+	PUSH R1
+	PUSH R2
+	PUSH R3
 	
+	MOV 	R1, 0H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 1H
+	MOV	 	R2, 0H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 1H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 1H
+	MOV	 	R2, 2H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 2H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 3H
+	MOV	 	R2, 0H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 2H
+	MOV	 	R2, 2H
+	MOV 	R3, 1
+
+	POP R3
+	POP R2
+	POP R1
+	RET
+		
+escrever_raquete:
