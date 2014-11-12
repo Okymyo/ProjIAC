@@ -41,46 +41,6 @@ MOV SP, SP_inicial
 CALL limpar_ecra
 ciclo:
 	CALL	teclado
-	MOV 	R1, 0H
-	MOV	 	R2, 8H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 0H
-	MOV 	R3, 0
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 0H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 0H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 1H
-	MOV 	R3, 0
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 0H
-	MOV 	R3, 0
-	CALL 	escrever_pixel
-	MOV 	R1, 0H
-	MOV	 	R2, 1H
-	MOV 	R3, 0
-	CALL 	escrever_pixel
 	JMP		ciclo
 teclado:		
 	PUSH	R1
