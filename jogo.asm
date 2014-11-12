@@ -172,42 +172,45 @@ escrever_fim:
 	
 	
 escrever_boneco:
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	
-	MOV 	R1, 0H
+	MOV 	R1, 1H
 	MOV	 	R2, 1H
 	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 1H
+	CALL 	escrever_pixel		; Escrever pixel na linha 1 e coluna 1
+	MOV 	R1, 2H
 	MOV	 	R2, 0H
 	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 1H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 1H
-	MOV	 	R2, 2H
-	MOV 	R3, 1
-	CALL 	escrever_pixel
+	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 0
 	MOV 	R1, 2H
 	MOV	 	R2, 1H
 	MOV 	R3, 1
-	CALL 	escrever_pixel
+	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 1
+	MOV 	R1, 2H
+	MOV	 	R2, 2H
+	MOV 	R3, 1
+	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 2
 	MOV 	R1, 3H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel		; Escrever pixel na linha 3 e coluna 1
+	MOV 	R1, 4H
 	MOV	 	R2, 0H
 	MOV 	R3, 1
-	CALL 	escrever_pixel
-	MOV 	R1, 2H
+	CALL 	escrever_pixel		; Escrever pixel na linha 4 e coluna 0
+	MOV 	R1, 4H
 	MOV	 	R2, 2H
 	MOV 	R3, 1
-
-	POP R3
-	POP R2
-	POP R1
-	RET
-
+	CALL 	escrever_pixel		; Escrever pixel na linha 4 e coluna 2
 	
 escrever_raquete:
+	MOV 	R1, 0H
+	MOV	 	R2, 4H
+	MOV 	R3, 1
+	CALL 	escrever_pixel		; Escrever pixel na linha 0 e coluna 4
+	MOV 	R1, 1H
+	MOV	 	R2, 4H
+	MOV 	R3, 1
+	CALL 	escrever_pixel		; Escrever pixel na linha 1 e coluna 4
+	MOV 	R1, 2H
+	MOV	 	R2, 4H
+	MOV 	R3, 1
+	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 4
