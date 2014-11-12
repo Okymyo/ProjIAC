@@ -38,8 +38,49 @@ imagem_hexa:	STRING	00H		; imagem em memoria dos displays hexadecimais
 ; **********************************************************************
 PLACE		0
 MOV SP, SP_inicial
+CALL limpar_ecra
 ciclo:
 	CALL	teclado
+	MOV 	R1, 0H
+	MOV	 	R2, 8H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 0H
+	MOV 	R3, 0
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 0H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 1H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 0H
+	MOV 	R3, 1
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 1H
+	MOV 	R3, 0
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 0H
+	MOV 	R3, 0
+	CALL 	escrever_pixel
+	MOV 	R1, 0H
+	MOV	 	R2, 1H
+	MOV 	R3, 0
+	CALL 	escrever_pixel
 	JMP		ciclo
 teclado:		
 	PUSH	R1
@@ -57,24 +98,25 @@ teclado:
 	MOV		R6, 010H   			; R6 indica o caracter premido, 10 indica 'vazio'
 	MOV 	R7, 10				; R7 com o valor a comparar
 teclado_ciclo:
-	ROL		R5, 1				; alterar linha para verificar a seguinte
-	CMP 	R5, R7				; comparar para saber se ainda "existe" a linha
-	JGE		teclado_fim			; se a linha a verificar for maior que 4, terminar
-	MOVB 	[R2], R5			; escrever no periferico de saída
-	MOVB 	R4, [R3]			; ler do periferico de entrada
-	AND 	R4, R4				; afectar as flags
-	JZ 		teclado_ciclo		; nenhuma tecla premida
+	ROL		R5, 1				; Alterar linha para verificar a seguinte
+	CMP 	R5, R7				; Comparar para saber se ainda "existe" a linha
+	JGE		teclado_fim			; Se a linha a verificar for maior que 4, terminar
+	MOVB 	[R2], R5			; Escrever no periferico de saída
+	MOVB 	R4, [R3]			; Ler do periferico de entrada
+	AND 	R4, R4				; Afectar as flags
+	JZ 		teclado_ciclo		; Nenhuma tecla premida
 teclado_linha:
 	ADD		R6, 4
 	SHR 	R5, 1
-	JNZ		teclado_linha		; se ainda nao for zero, ainda ha mais a incrementar
+	JNZ		teclado_linha		; Se ainda nao for zero, ainda ha mais a incrementar
 teclado_coluna:
 	ADD		R6, 1
 	SHR 	R4, 1
-	JNZ		teclado_coluna		; se ainda nao for zero, ainda ha mais a incrementar
-	SUB		R6, 15H				; incrementamos 1x4 e 1x1 a mais, e o 1 inicial de 'vazio'
+	JNZ		teclado_coluna		; Se ainda nao for zero, ainda ha mais a incrementar
+	MOV		R7, 15H
+	SUB		R6, R7				; Incrementamos 1x4 e 1x1 a mais, e o 1 inicial de 'vazio'
 teclado_fim:
-	MOVB	[R1], R6			; escrever para memoria a tecla que pode ser nulo (10)
+	MOVB	[R1], R6			; Escrever para memoria a tecla que pode ser nulo (10)
 	POP 	R7					; POP
 	POP		R6					; POP?
 	POP 	R5					; POP POP POP
@@ -84,19 +126,112 @@ teclado_fim:
 	POP 	R1					; POP
 	RET
 	
-escrever_pixel: 				; escrever_pixel(linha,coluna)
-	MOV R1, linha
-	MOV R2, coluna
-	PUSH R3
-	MOV R3, R2
-	
-	MUL R1, 4					; multiplicar 4 a R1
-	ADD R1, 8000H				; somar 8000H a R1
-	DIV R3, 8000H				; dividir 8000H a R3
-	ADD R1, R3					; somar R3 a R1
-	MOD R2, 8					; resto da divisão de R2 por 8
-	
-	POP R3
+limpar_ecra:
+	PUSH 	R1
+	PUSH 	R2
+	PUSH 	R3
+	PUSH 	R4
+	MOV 	R1, PSCR_I 			; Primeiro endereco do ecra
+	MOV 	R2, PSCR_F			; Ultimo endereco do ecra
+	MOV		R3, 0
+	MOV		R4, 1
+ciclo_limpeza:
+	MOVB	[R1], R3
+	ADD		R1, R4
+	CMP 	R1, R2
+	JLE		ciclo_limpeza
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
 	RET
 
+
+escrever_pixel:
+	PUSH 	R1 					; Guarda a linha
+	PUSH 	R2					; Guarda a coluna
+	PUSH 	R3					; Guarda o valor (aceso ou apagado)
+	PUSH 	R4					; Registo auxiliar 1
+	PUSH 	R5					; Registo auxiliar 2
+	PUSH	R6					; Registo auxiliar 3
+	
+	; Byte a alterar = L*4 + C/8 + 8000H
+	MOV 	R5, 4
+	MUL 	R1, R5				; L*4
+	
+	MOV		R5, 8
+	MOV		R4, R2	
+	DIV 	R4, R5				; C/8
+	ADD 	R1, R4				; L*4 + C/8
+
+	MOV 	R5, 8000H
+	ADD 	R1, R5				; L*4 + C/8 + 8000H
+	
+	; Fazer modulo, visto que MOD causa problemas (8%8 != 0? e 0%8 != 0?)
+	; a%b = a - (a/b)*b
+	MOV 	R5, 8
+	MOV 	R6, R2
+	DIV 	R6, R5
+	MUL 	R6, R5
+	SUB 	R2, R6
+	
+	MOV 	R5, 1
+	MOV 	R4, 80H
+	AND	 	R2, R2
+	JZ	 	escrever_memoria
+escrever_ciclo:
+	SHR 	R4, 1
+	SUB 	R2, 1
+	JNZ 	escrever_ciclo
+escrever_memoria:
+	MOVB 	R6, [R1]			; Guardar o valor anterior do byte
+	AND 	R3, R3
+	JZ 		escrever_desligar
+escrever_ligar:
+	OR 		R4, R6				; Mascara para preservar o valor anterior
+	JMP		escrever_fim
+escrever_desligar:
+	MOV 	R5, 0FFH
+	XOR 	R4, R5
+	AND 	R4, R6				; Mascara para preservar o valor anterior
+escrever_fim:
+	MOVB 	[R1], R4
+	
+	POP		R6
+	POP 	R5
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
+	RET
+
+
+	
+escrever_pixel2: 				; escrever_pixel(linha,coluna)
+	;R1 linha
+	;R2 coluna
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	MOV R3, R2
+	MOV R4, 4
+	MUL R1, R4					; multiplicar 4 a R1
+	MOV R4, 8000H
+	ADD R1, R4					; somar 8000H a R1
+	MOV R4, 8
+	DIV R2, R4					; dividir 8 a R3
+	ADD R2, R1					; somar R3 a R1
+	MOD R2, R4					; resto da divisão de R2 por 8
+	
+	MOVB [R1], R2
+	
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	RET
+
+prototipo_mascaras:
+	
 	
