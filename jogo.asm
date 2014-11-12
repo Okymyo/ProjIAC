@@ -65,7 +65,7 @@ teclado_ciclo:
 	ROL		R5, 1				; Alterar linha para verificar a seguinte
 	CMP 	R5, R7				; Comparar para saber se ainda "existe" a linha
 	JGE		teclado_fim			; Se a linha a verificar for maior que 4, terminar
-	MOVB 	[R2], R5			; Escrever no periferico de saída
+	MOVB 	[R2], R5			; Escrever no periferico de saida
 	MOVB 	R4, [R3]			; Ler do periferico de entrada
 	AND 	R4, R4				; Afectar as flags
 	JZ 		teclado_ciclo		; Nenhuma tecla premida
@@ -89,6 +89,7 @@ teclado_fim:
 	POP 	R2					; POP POP POP POP!
 	POP 	R1					; POP
 	RET
+	
 	
 limpar_ecra:
 	PUSH 	R1
@@ -168,36 +169,7 @@ escrever_fim:
 	POP 	R2
 	POP 	R1
 	RET
-
-
-
 	
-escrever_pixel2: 				; escrever_pixel(linha,coluna)
-	;R1 linha
-	;R2 coluna
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	PUSH R4
-	MOV R3, R2
-	MOV R4, 4
-	MUL R1, R4					; multiplicar 4 a R1
-	MOV R4, 8000H
-	ADD R1, R4					; somar 8000H a R1
-	MOV R4, 8
-	DIV R2, R4					; dividir 8 a R3
-	ADD R2, R1					; somar R3 a R1
-	MOD R2, R4					; resto da divisão de R2 por 8
-	
-	MOVB [R1], R2
-	
-	POP R4
-	POP R3
-	POP R2
-	POP R1
-	RET
-
-prototipo_mascaras:
 	
 escrever_boneco:
 	PUSH R1
@@ -236,5 +208,6 @@ escrever_boneco:
 	POP R2
 	POP R1
 	RET
-		
+
+	
 escrever_raquete:
