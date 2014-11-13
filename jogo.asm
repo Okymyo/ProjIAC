@@ -13,7 +13,8 @@
 ; * Constantes
 ; **********************************************************************
 
-BUFFER	EQU	500H				; endereco de memoria onde se guarda a tecla		
+BUFFER	EQU	500H				; endereco de memoria onde se guarda a tecla
+POS_B	EQU 600H				; endereco de memoria onde se guarda posicao do boneco		
 LINHA	EQU	8000H				; correspondente a linha 1 antes do ROL
 
 PSCR_I 	EQU 8000H
@@ -49,15 +50,15 @@ boneco_raquete:	STRING 		10000000b
 PLACE 		2100H
 
 ;teclado_movimento com alteracoes linha, coluna
-teclado_movimento: STRING -1, -1	;0
-			STRING -1, 0			;1
-			STRING -1, 1			;2
+teclado_movimento: STRING 0FFH, 0FFH;0
+			STRING 0FFH, 0			;1
+			STRING 0FFH, 1			;2
 			STRING 0, 0				;3
-			STRING 0, -1			;4
+			STRING 0, 0FFH			;4
 			STRING 0, 0				;5
 			STRING 0, 1				;6
 			STRING 0, 0				;7
-			STRING 1, -1			;8
+			STRING 1, 0FFH			;8
 			STRING 1, 0				;9
 			STRING 1, 1				;a
 			STRING 0, 0				;b
@@ -74,10 +75,7 @@ MOV SP, SP_inicial
 CALL limpar_ecra
 ciclo:
 	CALL	teclado
-	MOV 	R1, 27
-	MOV 	R2, 27
-	CALL 	escrever_boneco
-	CALL	limpar_ecra
+	CALL	processar_movimento
 	JMP		ciclo
 teclado:		
 	PUSH	R1
@@ -87,6 +85,7 @@ teclado:
 	PUSH	R5
 	PUSH	R6
 	PUSH	R7
+	PUSH 	R8
 	MOV 	R1, BUFFER			; R1 com endereco de memoria BUFFER 
 	MOV		R2, POUT2			; R2 com o endereco do periferico
 	MOV 	R3, PIN				; R3 com endereco de input do teclado
@@ -113,14 +112,18 @@ teclado_coluna:
 	MOV		R7, 15H
 	SUB		R6, R7				; Incrementamos 1x4 e 1x1 a mais, e o 1 inicial de 'vazio'
 teclado_fim:
+	MOVB 	R8, [R1]			; Guardar tecla premida anteriormente (ou 10 caso vazia)
 	MOVB	[R1], R6			; Escrever para memoria a tecla que pode ser nulo (10)
-	POP 	R7					; POP
-	POP		R6					; POP?
-	POP 	R5					; POP POP POP
-	POP 	R4					; POP POP
-	POP 	R3					; POP POP BEEP?
-	POP 	R2					; POP POP POP POP!
-	POP 	R1					; POP
+	ADD 	R1, 1
+	MOVB 	[R1], R8			; Escrever para memoria a tecla premida anteriormente
+	POP 	R8
+	POP 	R7
+	POP		R6
+	POP 	R5
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
 	RET
 	
 	
@@ -216,14 +219,14 @@ escrever_boneco:
 	PUSH 	R9
 	SUB 	R1, 1
 	MOV 	R4, R2
-	MOV 	R7, 9				; HARDCODED - Numero de linhas de boneco (+1)
+	MOV 	R7, 9				; HARDCODED - Numero MAXIMO de linhas de boneco (+1)
 	MOV 	R9, boneco_raquete
 escrever_ciclo_linha:
 	SUB 	R7, 1
 	JZ		escrever_boneco_fim
 	MOVB 	R5, [R9]
 	ADD 	R9, 1
-	MOV 	R6, 9				; HARDCODED - Numero de colunas de boneco (+1)
+	MOV 	R6, 9				; HARDCODED - Numero MAXIMO de colunas de boneco (+1)
 	ADD 	R1, 1
 	MOV 	R2, R4
 escrever_ciclo_coluna:
@@ -246,4 +249,42 @@ escrever_boneco_fim:
 	POP 	R3
 	POP 	R2
 	POP 	R1
+	RET
+	
+processar_movimento:
+	PUSH 	R1
+	PUSH 	R2
+	PUSH 	R3
+	PUSH 	R4
+	MOV		R3, BUFFER
+	MOVB 	R3, [R3]			; R3 possui a tecla carregada actualmente
+	MOV 	R2, BUFFER
+	ADD 	R2, 1				; R2 possui a tecla carregada anteriormente
+	MOVB	R2, [R2]
+	CMP 	R3, R2				; Apenas se processa se a tecla premida anteriormente for maior que a premida
+	JGE 	movimento_fim		; pois 10H (nula) e maior que todas as teclas premidas.
+								; Se a tecla premida for nula, sera maior ou igual, logo jump
+								; Se a tecla premida nao mudar, sera igual, logo jump.
+	MOV 	R1, POS_B
+	MOVB	R1, [R1]
+	MOV 	R2, POS_B
+	ADD 	R2, 1
+	MOVB	R2, [R2]
+	MOV 	R4, teclado_movimento
+	SHL		R3, 2
+	ADD		R3, R4
+	MOVB	R3, [R3]
+	ADD 	R1, R3
+	ADD 	R3, 1
+	ADD 	R2, R3
+	CALL 	escrever_boneco
+	MOV 	R3, POS_B
+	MOVB	[R3], R1
+	ADD		R3, 1
+	MOVB	[R3], R2
+movimento_fim:
+	POP R4
+	POP R3
+	POP R2
+	POP R1
 	RET
