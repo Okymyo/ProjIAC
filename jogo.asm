@@ -36,7 +36,12 @@ SP_inicial:						; endereco para inicializar SP
 
 imagem_hexa:	STRING	00H		; imagem em memoria dos displays hexadecimais 
 					;(inicializada a zero).
-
+PLACE		2000H
+boneco_raquete:	STRING 		00000001b
+				STRING 		00000101b
+				STRING 		00001111b
+				STRING 		00000100b
+				STRING 		00001010b
 ; **********************************************************************
 ; * Codigo
 ; **********************************************************************
@@ -45,6 +50,9 @@ MOV SP, SP_inicial
 CALL limpar_ecra
 ciclo:
 	CALL	teclado
+	MOV 	R1, 4
+	MOV 	R2, 7
+	CALL 	escrever_boneco
 	JMP		ciclo
 teclado:		
 	PUSH	R1
@@ -171,46 +179,45 @@ escrever_fim:
 	RET
 	
 	
-escrever_boneco:
-	MOV 	R1, 1H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 1 e coluna 1
-	MOV 	R1, 2H
-	MOV	 	R2, 0H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 0
-	MOV 	R1, 2H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 1
-	MOV 	R1, 2H
-	MOV	 	R2, 2H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 2
-	MOV 	R1, 3H
-	MOV	 	R2, 1H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 3 e coluna 1
-	MOV 	R1, 4H
-	MOV	 	R2, 0H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 4 e coluna 0
-	MOV 	R1, 4H
-	MOV	 	R2, 2H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 4 e coluna 2
-	
-escrever_raquete:
-	MOV 	R1, 0H
-	MOV	 	R2, 4H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 0 e coluna 4
-	MOV 	R1, 1H
-	MOV	 	R2, 4H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 1 e coluna 4
-	MOV 	R1, 2H
-	MOV	 	R2, 4H
-	MOV 	R3, 1
-	CALL 	escrever_pixel		; Escrever pixel na linha 2 e coluna 4
+escrever_boneco: 				; HARDCODED - Alterar para ler de memoria, num CICLO
+	PUSH	R1 					; Valores para funcao escrever_pixel
+	PUSH 	R2
+	PUSH 	R3
+	PUSH 	R4					; Guardar coluna canto superior esquerdo
+	PUSH 	R6					; Valores de auxilio
+	PUSH 	R7
+	PUSH 	R8
+	PUSH 	R9
+	PUSH 	R10
+	MOV 	R4, R2
+	MOV 	R7, 5				; HARDCODED - Numero de linhas de boneco
+	MOV 	R9, boneco_raquete
+escrever_ciclo_linha:
+	SUB 	R7, 1
+	JZ		escrever_boneco_fim
+	ADD 	R9, 1
+	MOV 	R5, [R9]
+	MOV 	R6, 4				; HARDCODED - Numero de colunas de boneco
+	ADD 	R1, 1
+	MOV 	R2, R4
+escrever_ciclo_coluna:
+	MOV 	R3, R5
+	MOV 	R8, 1H
+	AND 	R3, R8
+	CALL 	escrever_pixel
+	ADD 	R2, 1
+	SHR 	R5, 1
+	SUB 	R6, 1
+	JNZ 	escrever_ciclo_coluna
+	JMP 	escrever_ciclo_linha
+escrever_boneco_fim:
+	POP 	R10
+	POP 	R9
+	POP 	R8
+	POP 	R7
+	POP 	R6
+	POP 	R5
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
