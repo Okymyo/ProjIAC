@@ -271,7 +271,7 @@ processar_movimento:
 	ADD 	R2, 1
 	MOVB	R2, [R2]
 	MOV 	R4, teclado_movimento
-	SHL		R3, 2
+	SHL		R3, 1
 	ADD		R3, R4
 	MOVB	R3, [R3]
 	ADD 	R1, R3
