@@ -4,16 +4,16 @@
 
 ; *********************************************************************
 ; GRUPO 2:
-; Mariana Silva (81938)
-; Nuno Anselmo  (81900)
-; Miguel Elvas  (82583)
+; 81900 - Nuno Anselmo
+; 81938 - Mariana Silva
+; 82583 - Miguel Elvas
 ; *********************************************************************
 
 ; **********************************************************************
 ; * Constantes
 ; **********************************************************************
 
-BUFFER	EQU	100H				; endereco de memoria onde se guarda a tecla		
+BUFFER	EQU	500H				; endereco de memoria onde se guarda a tecla		
 LINHA	EQU	8000H				; correspondente a linha 1 antes do ROL
 
 PSCR_I 	EQU 8000H
@@ -34,25 +34,48 @@ SP_inicial:						; endereco para inicializar SP
 ; * Dados
 ; *********************************************************************************
 
-imagem_hexa:	STRING	00H		; imagem em memoria dos displays hexadecimais 
-					;(inicializada a zero).
+imagem_hexa:	STRING	00H		; imagem em memoria dos displays hexadecimais
+
 PLACE		2000H
-boneco_raquete:	STRING 		00000001b
-				STRING 		00000101b
-				STRING 		00001111b
-				STRING 		00000100b
-				STRING 		00001010b
+boneco_raquete:	STRING 		10000000b
+			STRING 		10100000b
+			STRING 		11110000b
+			STRING 		00100000b
+			STRING 		01010000b
+			STRING 		00000000b
+			STRING 		00000000b
+			STRING 		00000000b
+				
+PLACE 		2100H
+teclado_movimento: STRING -1, -1	;0
+			STRING -1, 0			;1
+			STRING -1, 1			;2
+			STRING 0, 0				;3
+			STRING 0, -1			;4
+			STRING 0, 0				;5
+			STRING 0, 1				;6
+			STRING 0, 0				;7
+			STRING 1, -1			;8
+			STRING 1, 0				;9
+			STRING 1, 1				;a
+			STRING 0, 0				;b
+			STRING 0, 0				;c
+			STRING 0, 0				;d
+			STRING 0, 0				;e
+			STRING 0, 0				;f
+			
 ; **********************************************************************
 ; * Codigo
 ; **********************************************************************
-PLACE		0
+PLACE		0H
 MOV SP, SP_inicial
 CALL limpar_ecra
 ciclo:
 	CALL	teclado
-	MOV 	R1, 4
-	MOV 	R2, 7
+	MOV 	R1, 27
+	MOV 	R2, 27
 	CALL 	escrever_boneco
+	CALL	limpar_ecra
 	JMP		ciclo
 teclado:		
 	PUSH	R1
@@ -109,10 +132,10 @@ limpar_ecra:
 	MOV		R3, 0
 	MOV		R4, 1
 ciclo_limpeza:
-	MOVB	[R1], R3
-	ADD		R1, R4
-	CMP 	R1, R2
-	JLE		ciclo_limpeza
+	MOVB	[R1], R3			; Apagar o byte
+	ADD		R1, R4				; Avancar para o proximo byte
+	CMP 	R1, R2				; Comparar o endereco actual com o ultimo
+	JLE		ciclo_limpeza		; Caso nao seja o ultimo, continuar a limpar
 	POP 	R4
 	POP 	R3
 	POP 	R2
@@ -179,30 +202,31 @@ escrever_fim:
 	RET
 	
 	
-escrever_boneco: 				; HARDCODED - Alterar para ler de memoria, num CICLO
-	PUSH	R1 					; Valores para funcao escrever_pixel
-	PUSH 	R2
-	PUSH 	R3
+escrever_boneco:
+	PUSH	R1 					; Linha para funcao escrever_pixel
+	PUSH 	R2					; Coluna para funcao escrever_pixel
+	PUSH 	R3					; Aceso ou apagado para funcao escrever_pixel
 	PUSH 	R4					; Guardar coluna canto superior esquerdo
-	PUSH 	R6					; Valores de auxilio
+	PUSH 	R5					; Valores de auxilio
+	PUSH 	R6
 	PUSH 	R7
 	PUSH 	R8
 	PUSH 	R9
-	PUSH 	R10
+	SUB 	R1, 1
 	MOV 	R4, R2
-	MOV 	R7, 5				; HARDCODED - Numero de linhas de boneco
+	MOV 	R7, 9				; HARDCODED - Numero de linhas de boneco (+1)
 	MOV 	R9, boneco_raquete
 escrever_ciclo_linha:
 	SUB 	R7, 1
 	JZ		escrever_boneco_fim
+	MOVB 	R5, [R9]
 	ADD 	R9, 1
-	MOV 	R5, [R9]
-	MOV 	R6, 4				; HARDCODED - Numero de colunas de boneco
+	MOV 	R6, 9				; HARDCODED - Numero de colunas de boneco (+1)
 	ADD 	R1, 1
 	MOV 	R2, R4
 escrever_ciclo_coluna:
 	MOV 	R3, R5
-	MOV 	R8, 1H
+	MOV 	R8, 1
 	AND 	R3, R8
 	CALL 	escrever_pixel
 	ADD 	R2, 1
@@ -211,7 +235,6 @@ escrever_ciclo_coluna:
 	JNZ 	escrever_ciclo_coluna
 	JMP 	escrever_ciclo_linha
 escrever_boneco_fim:
-	POP 	R10
 	POP 	R9
 	POP 	R8
 	POP 	R7
@@ -221,3 +244,4 @@ escrever_boneco_fim:
 	POP 	R3
 	POP 	R2
 	POP 	R1
+	RET

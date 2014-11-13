@@ -3,13 +3,13 @@ CNR2202990601001
 # ******
 0 CM= "ist.ac.simulador.nucleo.SCompoundModule" Name= "Arch Root" Gui= "null" NB= 0 NM= 14 NC= 18
   # Connections
-  0 C= "ist.ac.simulador.nucleo.SConnection" Name= "C792" NBits= 16 NSegments= 1
+  0 C= "ist.ac.simulador.nucleo.SConnection" Name= "C1c7c" NBits= 16 NSegments= 1
     Po= "1115bf0b20f-0" Pd= "1115bf023f8" Np= 4
       X= 129 Y= 271
       X= 184 Y= 271
       X= 184 Y= 231
       X= 205 Y= 231
-  1 C= "ist.ac.simulador.nucleo.SConnection" Name= "C8e0f" NBits= 16 NSegments= 5
+  1 C= "ist.ac.simulador.nucleo.SConnection" Name= "C6e20" NBits= 16 NSegments= 5
     Po= "1115bf059ae-0" Pd= "1115bf0259e" Np= 4
       X= 517 Y= 135
       X= 485 Y= 135
@@ -41,7 +41,7 @@ CNR2202990601001
       X= 340 Y= 381
       X= 340 Y= 111
       X= 315 Y= 111
-  2 C= "ist.ac.simulador.nucleo.SConnection" Name= "C950c" NBits= 1 NSegments= 3
+  2 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cf125" NBits= 1 NSegments= 3
     Po= "1115bf05a4a" Pd= "1115bf025cd" Np= 4
       X= 517 Y= 195
       X= 397 Y= 195
@@ -57,7 +57,7 @@ CNR2202990601001
       X= 472 Y= 703
       X= 472 Y= 379
       X= 517 Y= 379
-  3 C= "ist.ac.simulador.nucleo.SConnection" Name= "C5563" NBits= 1 NSegments= 4
+  3 C= "ist.ac.simulador.nucleo.SConnection" Name= "C6689" NBits= 1 NSegments= 4
     Po= "1115bf05ae7" Pd= "1115bf025dc" Np= 4
       X= 517 Y= 215
       X= 416 Y= 215
@@ -78,7 +78,7 @@ CNR2202990601001
       X= 492 Y= 607
       X= 492 Y= 511
       X= 517 Y= 511
-  4 C= "ist.ac.simulador.nucleo.SConnection" Name= "C66c1" NBits= 1 NSegments= 2
+  4 C= "ist.ac.simulador.nucleo.SConnection" Name= "C4c4e" NBits= 1 NSegments= 2
     Po= "1115bf059cd" Pd= "1115bf025ae" Np= 4
       X= 517 Y= 155
       X= 395 Y= 155
@@ -91,7 +91,7 @@ CNR2202990601001
       X= 395 Y= 155
       X= 395 Y= 131
       X= 315 Y= 131
-  5 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cfad7" NBits= 8 NSegments= 5
+  5 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cb692" NBits= 8 NSegments= 5
     Po= "1115bf059fc" Pd= "1115bf0256f" Np= 6
       X= 627 Y= 155
       X= 691 Y= 155
@@ -123,7 +123,7 @@ CNR2202990601001
       X= 441 Y= 587
       X= 441 Y= 491
       X= 517 Y= 491
-  6 C= "ist.ac.simulador.nucleo.SConnection" Name= "Ca224" NBits= 8 NSegments= 2
+  6 C= "ist.ac.simulador.nucleo.SConnection" Name= "Ce852" NBits= 8 NSegments= 2
     Po= "1115bf05a1b" Pd= "1115bf0257f" Np= 6
       X= 627 Y= 135
       X= 648 Y= 135
@@ -138,11 +138,11 @@ CNR2202990601001
       X= 440 Y= 258
       X= 440 Y= 171
       X= 315 Y= 171
-  7 C= "ist.ac.simulador.nucleo.SConnection" Name= "C9be4" NBits= 8 NSegments= 1
+  7 C= "ist.ac.simulador.nucleo.SConnection" Name= "C15c1" NBits= 8 NSegments= 1
     Po= "12009bc4af9" Pd= "12009aaedf7" Np= 2
       X= 627 Y= 567
       X= 741 Y= 567
-  8 C= "ist.ac.simulador.nucleo.SConnection" Name= "C3dfd" NBits= 8 NSegments= 2
+  8 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cb943" NBits= 8 NSegments= 2
     Po= "12009ac8d31" Pd= "12009bd6e80-0" Np= 2
       X= 627 Y= 471
       X= 741 Y= 471
@@ -151,7 +151,7 @@ CNR2202990601001
       X= 706 Y= 423
       X= 706 Y= 471
       X= 627 Y= 471
-  9 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cc1ce" NBits= 8 NSegments= 5
+  9 C= "ist.ac.simulador.nucleo.SConnection" Name= "C9f3b" NBits= 8 NSegments= 5
     Po= "12009aaedd4-0" Pd= "12009ac77dd" Np= 6
       X= 851 Y= 567
       X= 880 Y= 567
@@ -183,44 +183,44 @@ CNR2202990601001
       X= 169 Y= 207
       X= 169 Y= 171
       X= 205 Y= 171
-  10 C= "ist.ac.simulador.nucleo.SConnection" Name= "C90fd" NBits= 1 NSegments= 1
+  10 C= "ist.ac.simulador.nucleo.SConnection" Name= "C6e8c" NBits= 1 NSegments= 1
     Po= "12009b46439" Pd= "12014ac5d8e" Np= 2
       X= 235 Y= 431
       X= 269 Y= 431
-  11 C= "ist.ac.simulador.nucleo.SConnection" Name= "C9312" NBits= 1 NSegments= 1
+  11 C= "ist.ac.simulador.nucleo.SConnection" Name= "C6b7f" NBits= 1 NSegments= 1
     Po= "12009b4647b" Pd= "12014ac5d97" Np= 2
       X= 235 Y= 451
       X= 269 Y= 451
-  12 C= "ist.ac.simulador.nucleo.SConnection" Name= "C88b5" NBits= 1 NSegments= 1
+  12 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cfa1c" NBits= 1 NSegments= 1
     Po= "12009b464b7" Pd= "12014ac5da1" Np= 2
       X= 235 Y= 471
       X= 269 Y= 471
-  13 C= "ist.ac.simulador.nucleo.SConnection" Name= "C447c" NBits= 1 NSegments= 1
+  13 C= "ist.ac.simulador.nucleo.SConnection" Name= "C7b74" NBits= 1 NSegments= 1
     Po= "12014ac5d85-0" Pd= "1115bf05af6" Np= 5
       X= 379 Y= 431
       X= 379 Y= 301
       X= 501 Y= 301
       X= 501 Y= 175
       X= 517 Y= 175
-  14 C= "ist.ac.simulador.nucleo.SConnection" Name= "C30f8" NBits= 1 NSegments= 1
+  14 C= "ist.ac.simulador.nucleo.SConnection" Name= "Ce9ab" NBits= 1 NSegments= 1
     Po= "12009b46553" Pd= "12009ac7790-0" Np= 4
       X= 235 Y= 571
       X= 310 Y= 571
       X= 310 Y= 663
       X= 517 Y= 663
-  15 C= "ist.ac.simulador.nucleo.SConnection" Name= "C6951" NBits= 1 NSegments= 1
+  15 C= "ist.ac.simulador.nucleo.SConnection" Name= "C5cdc" NBits= 1 NSegments= 1
     Po= "12009b46538" Pd= "12009bc4ad8" Np= 4
       X= 235 Y= 551
       X= 401 Y= 551
       X= 401 Y= 567
       X= 517 Y= 567
-  16 C= "ist.ac.simulador.nucleo.SConnection" Name= "C9ce1" NBits= 1 NSegments= 1
+  16 C= "ist.ac.simulador.nucleo.SConnection" Name= "Cdd69" NBits= 1 NSegments= 1
     Po= "12009b46518" Pd= "12009ac8d12" Np= 4
       X= 235 Y= 531
       X= 426 Y= 531
       X= 426 Y= 471
       X= 517 Y= 471
-  17 C= "ist.ac.simulador.nucleo.SConnection" Name= "Ce683" NBits= 1 NSegments= 1
+  17 C= "ist.ac.simulador.nucleo.SConnection" Name= "C6fa3" NBits= 1 NSegments= 1
     Po= "12009b464fc" Pd= "11fdfa786a4" Np= 6
       X= 235 Y= 511
       X= 410 Y= 511
