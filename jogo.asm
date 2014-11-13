@@ -50,29 +50,45 @@ boneco_raquete:	STRING 		10000000b
 PLACE 		2100H
 
 ;teclado_movimento com alteracoes linha, coluna
-teclado_movimento: STRING 0FFH, 0FFH;0
-			STRING 0FFH, 0			;1
-			STRING 0FFH, 1			;2
-			STRING 0, 0				;3
-			STRING 0, 0FFH			;4
-			STRING 0, 0				;5
-			STRING 0, 1				;6
-			STRING 0, 0				;7
-			STRING 1, 0FFH			;8
-			STRING 1, 0				;9
-			STRING 1, 1				;a
-			STRING 0, 0				;b
-			STRING 0, 0				;c
-			STRING 0, 0				;d
-			STRING 0, 0				;e
-			STRING 0, 0				;f
+teclado_movimento: WORD 0FFFFH
+			WORD 0FFFFH			;0
+			WORD 0FFFFH
+			WORD 0				;1
+			WORD 0FFFFH
+			WORD 1				;2
+			WORD 0
+			WORD 0				;3
+			WORD 0
+			WORD 0FFFFH			;4
+			WORD 0
+			WORD 0				;5
+			WORD 0
+			WORD 1				;6
+			WORD 0
+			WORD 0				;7
+			WORD 1
+			WORD 0FFFFH			;8
+			WORD 1
+			WORD 0				;9
+			WORD 1
+			WORD 1				;a
+			WORD 0
+			WORD 0				;b
+			WORD 0
+			WORD 0				;c
+			WORD 0
+			WORD 0				;d
+			WORD 0
+			WORD 0				;e
+			WORD 0
+			WORD 0				;f
 			
 ; **********************************************************************
 ; * Codigo
 ; **********************************************************************
 PLACE		0H
 MOV SP, SP_inicial
-CALL limpar_ecra
+CALL reset
 ciclo:
 	CALL	teclado
 	CALL	processar_movimento
@@ -271,12 +287,15 @@ processar_movimento:
 	ADD 	R2, 1
 	MOVB	R2, [R2]
 	MOV 	R4, teclado_movimento
-	SHL		R3, 1
-	ADD		R3, R4
-	MOVB	R3, [R3]
-	ADD 	R1, R3
-	ADD 	R3, 1
-	ADD 	R2, R3
+	SHL		R3, 2
+	ADD		R4, R3
+	MOV		R4, [R4]
+	ADD 	R1, R4
+	ADD 	R3, 2
+	MOV		R4, teclado_movimento
+	ADD		R4, R3
+	MOV		R4, [R4]
+	ADD 	R2, R4
 	CALL 	escrever_boneco
 	MOV 	R3, POS_B
 	MOVB	[R3], R1
@@ -285,6 +304,17 @@ processar_movimento:
 movimento_fim:
 	POP R4
 	POP R3
+	POP R2
+	POP R1
+	RET
+
+reset:
+	PUSH R1
+	PUSH R2
+	CALL limpar_ecra
+	MOV R2, 0
+	MOV R1, POS_B
+	MOV [R1], R2
 	POP R2
 	POP R1
 	RET
