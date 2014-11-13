@@ -47,6 +47,8 @@ boneco_raquete:	STRING 		10000000b
 			STRING 		00000000b
 				
 PLACE 		2100H
+
+;teclado_movimento com alteracoes linha, coluna
 teclado_movimento: STRING -1, -1	;0
 			STRING -1, 0			;1
 			STRING -1, 1			;2
