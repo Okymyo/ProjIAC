@@ -87,8 +87,8 @@ teclado_movimento: WORD 0FFFFH		;0
 ; * Codigo
 ; **********************************************************************
 PLACE		0H
-MOV SP, SP_inicial
-CALL reset
+	MOV 	SP, SP_inicial
+	CALL 	reset
 ciclo:
 	CALL	teclado
 	CALL	processar_movimento
@@ -288,26 +288,26 @@ processar_movimento:
 									; Se a tecla premida for nula, sera maior ou igual, logo jump
 									; Se a tecla premida nao mudar, sera igual, logo jump.
 	MOV 	R1, POS_B
-	MOVB	R1, [R1]
+	MOVB	R1, [R1]				; Guardar em R1 a linha actual
 	MOV 	R2, POS_B
 	ADD 	R2, 1
-	MOVB	R2, [R2]
-	CALL	apagar_boneco
-	MOV 	R4, teclado_movimento
-	SHL		R3, 2
+	MOVB	R2, [R2]				; Guardar em R2 a coluna actual
+	CALL	apagar_boneco			; Limpar boneco actual (para redesenhar)
+	MOV 	R4, teclado_movimento	; Endereco onde se guarda tabela de movimentos
+	SHL		R3, 2					; Multiplicar por 4 (2 words, 2 bytes por word)
+	ADD		R4, R3					; Somar para obter endereco de movimento para a tecla carregada
+	MOV		R4, [R4]				; Guardar deslocamento para linha
+	ADD 	R1, R4					; Aplicar o deslocamento da linha
+	ADD 	R3, 2					; Preparar para avancar para proximo word
+	MOV		R4, teclado_movimento	; Repetir passos anteriores mas agora para o endereco seguinte (+2)
 	ADD		R4, R3
 	MOV		R4, [R4]
-	ADD 	R1, R4
-	ADD 	R3, 2
-	MOV		R4, teclado_movimento
-	ADD		R4, R3
-	MOV		R4, [R4]
-	ADD 	R2, R4
-	CALL 	escrever_boneco
+	ADD 	R2, R4					; Aplicar o deslocamento da coluna
+	CALL 	escrever_boneco			; Escrever o novo boneco apos os deslocamentos
 	MOV 	R3, POS_B
-	MOVB	[R3], R1
+	MOVB	[R3], R1				; Guardar a linha actual em memoria
 	ADD		R3, 1
-	MOVB	[R3], R2
+	MOVB	[R3], R2				; Guardar a coluna actual em memoria
 movimento_fim:
 	POP		R6
 	POP		R5
@@ -355,12 +355,14 @@ apagar_boneco_fim:
 	RET
 
 reset:
-	PUSH R1
-	PUSH R2
-	CALL limpar_ecra
-	MOV R2, 0
-	MOV R1, POS_B
-	MOV [R1], R2
-	POP R2
-	POP R1
+	PUSH 	R1
+	PUSH 	R2
+	CALL 	limpar_ecra				; Executar a limpeza de ecra para reiniciar
+	MOV 	R2, 0
+	MOV 	R1, POS_B
+	MOV 	[R1], R2				; Reinicializar posicao do boneco para 0,0
+	MOV		R1, 0
+	CALL 	escrever_boneco			; Desenhar o boneco para inicializar
+	POP 	R2
+	POP 	R1
 	RET
