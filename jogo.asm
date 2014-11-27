@@ -38,19 +38,28 @@ SP_inicial:							; endereco para inicializar SP
 imagem_hexa:	STRING	00H			; imagem em memoria dos displays hexadecimais
 
 PLACE		2000H
-boneco_raquete:	STRING 	1000b
+boneco_raquete:
+			STRING 		1000b
 			STRING 		1010b
 			STRING 		1111b
 			STRING 		0010b
 			STRING 		0101b
 			
-PLACE		3000H
-boneco_tamanho:	STRING	4, 5		; Numero de colunas, linhas
+robot_desenho:
+			STRING		110b
+			STRING		111b
+			STRING		110b
+			
+PLACE		2100H
+boneco_tamanho:	
+			STRING		4, 5		; Numero de colunas, linhas
+			
+robot_tamanho:
+			STRING		3, 3		; Numero de colunas, linhas
 				
-PLACE 		2100H
-
-;teclado_movimento com alteracoes linha, coluna
-teclado_movimento: WORD 0FFFFH		;0
+PLACE 		2200H
+teclado_movimento:					;teclado_movimento com alteracoes linha, coluna
+			WORD 0FFFFH				;0
 			WORD 0FFFFH				;0
 			WORD 0FFFFH				;1
 			WORD 0					;1
@@ -89,10 +98,15 @@ teclado_movimento: WORD 0FFFFH		;0
 PLACE		0H
 	MOV 	SP, SP_inicial
 	CALL 	reset
+	MOV 	R1, 8
+	MOV		R2, 17
+	CALL	escrever_robot
 ciclo:
 	CALL	teclado
 	CALL	processar_movimento
 	JMP		ciclo
+	
+	
 teclado:		
 	PUSH	R1
 	PUSH 	R2
@@ -239,7 +253,7 @@ escrever_boneco:
 	MOVB	R7, [R7]				; Numero maximo de linhas
 	ADD 	R7, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
 	MOV 	R9, boneco_raquete
-escrever_ciclo_linha:
+escrever_boneco_linha:
 	SUB 	R7, 1					; Subtrair 1 ao contador para verificar se existem mais linhas
 	JZ		escrever_boneco_fim		; Caso tenham acabado as linhas, terminar
 	MOVB 	R5, [R9]
@@ -249,7 +263,7 @@ escrever_ciclo_linha:
 	ADD 	R6, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
 	ADD 	R1, 1
 	MOV 	R2, R4
-escrever_ciclo_coluna:
+escrever_boneco_coluna:
 	MOV 	R3, R5
 	MOV 	R8, 1
 	AND 	R3, R8					; Isolar bit de menor valor
@@ -257,13 +271,136 @@ escrever_ciclo_coluna:
 	ADD 	R2, 1
 	SHR 	R5, 1					; Avancar para o proximo bit
 	SUB 	R6, 1					; Subtrair 1 ao contador para verificar se existem mais colunas
-	JNZ 	escrever_ciclo_coluna	; Caso haja mais colunas para desenhar, continuar
-	JMP 	escrever_ciclo_linha	; Caso tenha terminado a linha, terminar ciclo
+	JNZ 	escrever_boneco_coluna	; Caso haja mais colunas para desenhar, continuar
+	JMP 	escrever_boneco_linha	; Caso tenha terminado a linha, terminar ciclo
 escrever_boneco_fim:
 	POP 	R9
 	POP 	R8
 	POP 	R7
 	POP 	R6
+	POP 	R5
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
+	RET
+	
+apagar_boneco:
+	PUSH	R1 						; Linha para funcao escrever_pixel
+	PUSH 	R2						; Coluna para funcao escrever_pixel
+	PUSH 	R3						; Apagado para funcao escrever_pixel
+	PUSH 	R4						; Valores de auxilio
+	PUSH 	R5
+	PUSH	R6
+	SUB 	R1, 1
+	MOV		R3, 0					; Apagar sempre o pixel
+	MOV		R6, R2
+	MOV		R5, boneco_tamanho	
+	ADD		R5, 1
+	MOVB	R5, [R5]				; Numero maximo de linhas
+	ADD 	R5, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
+apagar_boneco_linha:
+	SUB 	R5, 1
+	JZ		apagar_boneco_fim
+	MOV		R4, boneco_tamanho	
+	MOVB	R4, [R4]				; Numero maximo de colunas
+	ADD 	R4, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
+	ADD 	R1, 1
+	MOV		R2, R6
+apagar_boneco_coluna:
+	CALL 	escrever_pixel
+	ADD 	R2, 1
+	SUB 	R4, 1
+	JNZ 	apagar_boneco_coluna
+	JMP 	apagar_boneco_linha
+apagar_boneco_fim:
+	POP		R6
+	POP 	R5
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
+	RET
+
+escrever_robot:
+	PUSH	R1 						; Linha para funcao escrever_pixel
+	PUSH 	R2						; Coluna para funcao escrever_pixel
+	PUSH 	R3						; Aceso ou apagado para funcao escrever_pixel
+	PUSH 	R4						; Guardar coluna canto superior esquerdo
+	PUSH 	R5						; Valor de auxilio
+	PUSH 	R6						; Contador de colunas
+	PUSH 	R7						; Contador de linhas
+	PUSH 	R8						; Mascara
+	PUSH 	R9						; Posicao de desenho de tenista em memoria
+	SUB 	R1, 1
+	MOV 	R4, R2
+	MOV		R7, robot_tamanho	
+	ADD		R7, 1
+	MOVB	R7, [R7]				; Numero maximo de linhas
+	ADD 	R7, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
+	MOV 	R9, robot_desenho
+escrever_robot_linha:
+	SUB 	R7, 1					; Subtrair 1 ao contador para verificar se existem mais linhas
+	JZ		escrever_robot_fim		; Caso tenham acabado as linhas, terminar
+	MOVB 	R5, [R9]
+	ADD 	R9, 1
+	MOV		R6, robot_tamanho	
+	MOVB	R6, [R6]				; Numero maximo de colunas
+	ADD 	R6, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
+	ADD 	R1, 1
+	MOV 	R2, R4
+escrever_robot_coluna:
+	MOV 	R3, R5
+	MOV 	R8, 1
+	AND 	R3, R8					; Isolar bit de menor valor
+	CALL 	escrever_pixel
+	ADD 	R2, 1
+	SHR 	R5, 1					; Avancar para o proximo bit
+	SUB 	R6, 1					; Subtrair 1 ao contador para verificar se existem mais colunas
+	JNZ 	escrever_robot_coluna	; Caso haja mais colunas para desenhar, continuar
+	JMP 	escrever_robot_linha	; Caso tenha terminado a linha, terminar ciclo
+escrever_robot_fim:
+	POP 	R9
+	POP 	R8
+	POP 	R7
+	POP 	R6
+	POP 	R5
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
+	RET
+	
+apagar_robot:
+	PUSH	R1 						; Linha para funcao escrever_pixel
+	PUSH 	R2						; Coluna para funcao escrever_pixel
+	PUSH 	R3						; Apagado para funcao escrever_pixel
+	PUSH 	R4						; Valores de auxilio
+	PUSH 	R5
+	PUSH	R6
+	SUB 	R1, 1
+	MOV		R3, 0					; Apagar sempre o pixel
+	MOV		R6, R2
+	MOV		R5, robot_tamanho	
+	ADD		R5, 1
+	MOVB	R5, [R5]				; Numero maximo de linhas
+	ADD 	R5, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
+apagar_robot_linha:
+	SUB 	R5, 1
+	JZ		apagar_robot_fim
+	MOV		R4, robot_tamanho	
+	MOVB	R4, [R4]				; Numero maximo de colunas
+	ADD 	R4, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
+	ADD 	R1, 1
+	MOV		R2, R6
+apagar_robot_coluna:
+	CALL 	escrever_pixel
+	ADD 	R2, 1
+	SUB 	R4, 1
+	JNZ 	apagar_robot_coluna
+	JMP 	apagar_robot_linha
+apagar_robot_fim:
+	POP		R6
 	POP 	R5
 	POP 	R4
 	POP 	R3
@@ -310,14 +447,13 @@ processar_movimento:
 	MOV		R4, [R4]
 	ADD 	R2, R4					; Aplicar o deslocamento da coluna
 
-	
-	
-	
-	
 	MOV		R5, 21H					; 33 em hexadecimal, dimensao horizontal maxima do ecra (31) + erros na subtracção (subtrai +2)
 	MOV		R6, boneco_tamanho
 	MOVB	R6, [R6]
 	SUB		R5, R6					; Obter coluna mais a direita possivel para canto superior esquerdo
+	MOV 	R6, robot_tamanho
+	MOVB	R6, [R6]
+	SUB		R5, R6
 	CMP		R2, R5
 	JZ		falha_ver_horizontal	; Se exceder à direita, terminar
 	CMP		R2, 0
@@ -325,8 +461,6 @@ processar_movimento:
 falha_ver_horizontal:
 	MOV		R2, R8
 termina_ver_horizontal:
-
-
 
 	MOV		R5, 21H					; 33 em hexadecimal, dimensao vertical maxima do ecra (31) + erros na subtracção (subtrai +2)
 	MOV		R6, boneco_tamanho
@@ -339,13 +473,7 @@ termina_ver_horizontal:
 	JGE		termina_ver_vertical
 falha_ver_vertical:
 	MOV		R1, R7
-termina_ver_vertical:
-	
-	
-	
-	
-	
-	
+termina_ver_vertical:	
 	MOV		R9, R1					; Trocar R1 com R7
 	MOV		R1, R7
 	MOV		R7, R9
@@ -370,43 +498,6 @@ movimento_fim:
 	POP		R7
 	POP		R6
 	POP		R5
-	POP 	R4
-	POP 	R3
-	POP 	R2
-	POP 	R1
-	RET
-	
-apagar_boneco:
-	PUSH	R1 						; Linha para funcao escrever_pixel
-	PUSH 	R2						; Coluna para funcao escrever_pixel
-	PUSH 	R3						; Apagado para funcao escrever_pixel
-	PUSH 	R4						; Valores de auxilio
-	PUSH 	R5
-	PUSH	R6
-	SUB 	R1, 1
-	MOV		R3, 0					; Apagar sempre o pixel
-	MOV		R6, R2
-	MOV		R5, boneco_tamanho	
-	ADD		R5, 1
-	MOVB	R5, [R5]				; Numero maximo de linhas
-	ADD 	R5, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-apagar_ciclo_linha:
-	SUB 	R5, 1
-	JZ		apagar_boneco_fim
-	MOV		R4, boneco_tamanho	
-	MOVB	R4, [R4]				; Numero maximo de colunas
-	ADD 	R4, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-	ADD 	R1, 1
-	MOV		R2, R6
-apagar_ciclo_coluna:
-	CALL 	escrever_pixel
-	ADD 	R2, 1
-	SUB 	R4, 1
-	JNZ 	apagar_ciclo_coluna
-	JMP 	apagar_ciclo_linha
-apagar_boneco_fim:
-	POP		R6
-	POP 	R5
 	POP 	R4
 	POP 	R3
 	POP 	R2
