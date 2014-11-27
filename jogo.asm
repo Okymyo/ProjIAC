@@ -309,23 +309,42 @@ processar_movimento:
 	ADD		R4, R3
 	MOV		R4, [R4]
 	ADD 	R2, R4					; Aplicar o deslocamento da coluna
+
 	
-	;VERIFICACAO DE LIMITES - PROTOTIPO INCOMPLETO (SEMI-FUNCIONAL)!
-	MOV		R5, 1FH					; 31 em hexadecimal, dimensao horizontal maxima do ecra
+	
+	
+	
+	MOV		R5, 21H					; 33 em hexadecimal, dimensao horizontal maxima do ecra (31) + erros na subtracção (subtrai +2)
 	MOV		R6, boneco_tamanho
 	MOVB	R6, [R6]
 	SUB		R5, R6					; Obter coluna mais a direita possivel para canto superior esquerdo
 	CMP		R2, R5
-	JGE		movimento_fim
-	
-	MOV		R5, 1FH					; 31 em hexadecimal, dimensao vertical maxima do ecra
+	JZ		falha_ver_horizontal	; Se exceder à direita, terminar
+	CMP		R2, 0
+	JGE		termina_ver_horizontal
+falha_ver_horizontal:
+	MOV		R2, R8
+termina_ver_horizontal:
+
+
+
+	MOV		R5, 21H					; 33 em hexadecimal, dimensao vertical maxima do ecra (31) + erros na subtracção (subtrai +2)
 	MOV		R6, boneco_tamanho
 	ADD		R6, 1
 	MOVB	R6, [R6]
 	SUB		R5, R6					; Obter linha mais a baixo possivel para canto superior esquerdo
 	CMP		R1, R5
-	JGE		movimento_fim
-	;FIM VERIFICACAO DE LIMITES
+	JZ		falha_ver_vertical		; Se exceder à direita, terminar
+	CMP		R1, 0
+	JGE		termina_ver_vertical
+falha_ver_vertical:
+	MOV		R1, R7
+termina_ver_vertical:
+	
+	
+	
+	
+	
 	
 	MOV		R9, R1					; Trocar R1 com R7
 	MOV		R1, R7
