@@ -9,12 +9,28 @@
 ; 82583 - Miguel Elvas
 ; *********************************************************************
 
+; *********************************************************************
+; ESPECIFICACOES ALTERADAS:
+; Movimento de robos (1)
+;	O movimento nao se encontra limitado a 2 posicoes, podendo andar para cima e para baixo
+;	desde que nao haja colisao com outro robo
+; Movimento de robos (2)
+; 	O movimento pode ocorrer mesmo que nao se encontre nenhuma bola em andamento
+; *********************************************************************
+
 ; **********************************************************************
 ; * Constantes
 ; **********************************************************************
 
-BUFFER	EQU	500H					; endereco de memoria onde se guarda a tecla
-POS_B	EQU 600H					; endereco de memoria onde se guarda posicao do boneco		
+BUFFER	EQU	5600H					; endereco onde e guardada a tecla
+POS_B	EQU 5650H					; endereco onde e guardada posicao do boneco (linha, coluna)
+POS_R	EQU	5700H					; endereco onde e guardada a posicao dos robos (linha robo1, linha robo2)
+COL_R	EQU	5710H					; endereco onde e guardada a coluna dos robos
+GERADOR	EQU	5750H					; endereco onde e guardado o valor gerado pelo gerador pseudo-aleatorio
+FLAG_B	EQU	5800H					; endereco onde e guardada a flag das bolas
+DIR_B	EQU	5810H					; endereco onde e guardada a direccao das bolas (B1, B2)
+FLAG_R	EQU	5820H					; endereco onde e guardada a flag dos robos
+
 LINHA	EQU	8000H					; correspondente a linha 1 antes do ROL
 
 PSCR_I 	EQU 8000H
@@ -27,8 +43,8 @@ PIN		EQU 0E000H					; endereco do porto de E/S do teclado
 ; * Stack 
 ; *********************************************************************************
 
-PLACE		1000H
-pilha:		TABLE 100H				; espaco reservado para a pilha 
+PLACE		5D00H
+STACK:		TABLE 100H				; espaco reservado para o stack 
 SP_inicial:							; endereco para inicializar SP
 
 ; *********************************************************************************
@@ -38,73 +54,79 @@ SP_inicial:							; endereco para inicializar SP
 imagem_hexa:	STRING	00H			; imagem em memoria dos displays hexadecimais
 
 PLACE		2000H
-boneco_raquete:
-			STRING 		1000b
+boneco:	
+			STRING		4, 5		; Numero de colunas, linhas
+			STRING 		1000b		; Desenho (invertido)
 			STRING 		1010b
 			STRING 		1111b
 			STRING 		0010b
 			STRING 		0101b
 			
-robot_desenho:
-			STRING		110b
+PLACE		2100H
+robo:
+			STRING		3, 3		; Numero de colunas, linhas
+			STRING		110b		; Desenho (invertido)
 			STRING		111b
 			STRING		110b
 			
-PLACE		2100H
-boneco_tamanho:	
-			STRING		4, 5		; Numero de colunas, linhas
-			
-robot_tamanho:
-			STRING		3, 3		; Numero de colunas, linhas
+PLACE		2200H
+tab_interrup:
+			WORD		interrup1	; Rotina de interrupcao 1
+			WORD		interrup2	; Rotina de interrupcao 2
 				
-PLACE 		2200H
+PLACE 		2300H
 teclado_movimento:					;teclado_movimento com alteracoes linha, coluna
-			WORD 0FFFFH				;0
-			WORD 0FFFFH				;0
-			WORD 0FFFFH				;1
-			WORD 0					;1
-			WORD 0FFFFH				;2
-			WORD 1					;2
-			WORD 0					;3
-			WORD 0					;3
-			WORD 0					;4
-			WORD 0FFFFH				;4
-			WORD 0					;5
-			WORD 0					;5
-			WORD 0					;6
-			WORD 1					;6
-			WORD 0					;7
-			WORD 0					;7
-			WORD 1					;8
-			WORD 0FFFFH				;8
-			WORD 1					;9
-			WORD 0					;9
-			WORD 1					;a
-			WORD 1					;a
-			WORD 0					;b
-			WORD 0					;b
-			WORD 0					;c
-			WORD 0					;c
-			WORD 0					;d
-			WORD 0					;d
-			WORD 0					;e
-			WORD 0					;e
-			WORD 0					;f
-			WORD 0					;f
+			WORD		0FFFFH		;0
+			WORD		0FFFFH		;0
+			WORD		0FFFFH		;1
+			WORD		0			;1
+			WORD		0FFFFH		;2
+			WORD		1			;2
+			WORD		0			;3
+			WORD		0			;3
+			WORD		0			;4
+			WORD		0FFFFH		;4
+			WORD		0			;5
+			WORD		0			;5
+			WORD		0			;6
+			WORD		1			;6
+			WORD		0			;7
+			WORD		0			;7
+			WORD		1			;8
+			WORD		0FFFFH		;8
+			WORD		1			;9
+			WORD		0			;9
+			WORD		1			;a
+			WORD		1			;a
+			WORD		0			;b
+			WORD		0			;b
+			WORD		0			;c
+			WORD		0			;c
+			WORD		0			;d
+			WORD		0			;d
+			WORD		0			;e
+			WORD		0			;e
+			WORD		0			;f
+			WORD		0			;f
 			
 ; **********************************************************************
 ; * Codigo
 ; **********************************************************************
 PLACE		0H
 	MOV 	SP, SP_inicial
+	MOV		BTE, tab_interrup
 	CALL 	reset
-	MOV 	R1, 8
-	MOV		R2, 17
-	CALL	escrever_robot
-ciclo:
+	EI0
+	EI1
+	EI
+ciclo_principal:
 	CALL	teclado
-	CALL	processar_movimento
-	JMP		ciclo
+	CALL	processar_movimento_boneco
+	CALL	gerador
+	CALL	processar_movimento_robos
+	CALL	processar_movimento_bolas
+	CALL	gerador
+	JMP		ciclo_principal
 	
 	
 teclado:		
@@ -123,13 +145,14 @@ teclado:
 	MOV		R5, LINHA				; R5 guarda a linha verificada anteriormente
 	MOV		R6, 010H   				; R6 indica o caracter premido, 10 indica 'vazio'
 	MOV 	R7, 10					; R7 com o valor a comparar
+	MOV		R8, 0FH					; R8 com mascara que isola bits de entrada do teclado
 teclado_ciclo:
 	ROL		R5, 1					; Alterar linha para verificar a seguinte
 	CMP 	R5, R7					; Comparar para saber se ainda "existe" a linha
 	JGE		teclado_fim				; Se a linha a verificar for maior que 4, terminar
 	MOVB 	[R2], R5				; Escrever no periferico de saida
 	MOVB 	R4, [R3]				; Ler do periferico de entrada
-	AND 	R4, R4					; Afectar as flags
+	AND 	R4, R8					; Afectar as flags e isolar os bits de entrada do teclado
 	JZ 		teclado_ciclo			; Nenhuma tecla premida
 teclado_linha:
 	ADD		R6, 4
@@ -235,8 +258,7 @@ escrever_fim:
 	POP 	R1
 	RET
 	
-	
-escrever_boneco:
+desenhar_figura:
 	PUSH	R1 						; Linha para funcao escrever_pixel
 	PUSH 	R2						; Coluna para funcao escrever_pixel
 	PUSH 	R3						; Aceso ou apagado para funcao escrever_pixel
@@ -244,36 +266,37 @@ escrever_boneco:
 	PUSH 	R5						; Valor de auxilio
 	PUSH 	R6						; Contador de colunas
 	PUSH 	R7						; Contador de linhas
-	PUSH 	R8						; Mascara
-	PUSH 	R9						; Posicao de desenho de tenista em memoria
+	PUSH 	R8						; Mascara isoladora de ultimo bit, bem como controlador de apenas apagar
+	PUSH 	R9						; Posicao na memoria de linha a desenhar
+	PUSH	R10						; Posicao na memoria de figura a desenhar (primeiros dois enderecos sao dimensoes, depois desenho)
 	SUB 	R1, 1
 	MOV 	R4, R2
-	MOV		R7, boneco_tamanho	
+	MOV		R7, R10	
 	ADD		R7, 1
 	MOVB	R7, [R7]				; Numero maximo de linhas
 	ADD 	R7, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-	MOV 	R9, boneco_raquete
-escrever_boneco_linha:
+	MOV 	R9, R10
+	ADD		R9, 2
+desenhar_linha:
 	SUB 	R7, 1					; Subtrair 1 ao contador para verificar se existem mais linhas
-	JZ		escrever_boneco_fim		; Caso tenham acabado as linhas, terminar
+	JZ		desenhar_fim			; Caso tenham acabado as linhas, terminar
 	MOVB 	R5, [R9]
 	ADD 	R9, 1
-	MOV		R6, boneco_tamanho	
+	MOV		R6, R10	
 	MOVB	R6, [R6]				; Numero maximo de colunas
-	ADD 	R6, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
 	ADD 	R1, 1
 	MOV 	R2, R4
-escrever_boneco_coluna:
+desenhar_coluna:
 	MOV 	R3, R5
-	MOV 	R8, 1
 	AND 	R3, R8					; Isolar bit de menor valor
 	CALL 	escrever_pixel
 	ADD 	R2, 1
 	SHR 	R5, 1					; Avancar para o proximo bit
 	SUB 	R6, 1					; Subtrair 1 ao contador para verificar se existem mais colunas
-	JNZ 	escrever_boneco_coluna	; Caso haja mais colunas para desenhar, continuar
-	JMP 	escrever_boneco_linha	; Caso tenha terminado a linha, terminar ciclo
-escrever_boneco_fim:
+	JNZ 	desenhar_coluna			; Caso haja mais colunas para desenhar, continuar
+	JMP 	desenhar_linha			; Caso tenha terminado a linha, terminar ciclo
+desenhar_fim:
+	POP		R10
 	POP 	R9
 	POP 	R8
 	POP 	R7
@@ -285,130 +308,7 @@ escrever_boneco_fim:
 	POP 	R1
 	RET
 	
-apagar_boneco:
-	PUSH	R1 						; Linha para funcao escrever_pixel
-	PUSH 	R2						; Coluna para funcao escrever_pixel
-	PUSH 	R3						; Apagado para funcao escrever_pixel
-	PUSH 	R4						; Valores de auxilio
-	PUSH 	R5
-	PUSH	R6
-	SUB 	R1, 1
-	MOV		R3, 0					; Apagar sempre o pixel
-	MOV		R6, R2
-	MOV		R5, boneco_tamanho	
-	ADD		R5, 1
-	MOVB	R5, [R5]				; Numero maximo de linhas
-	ADD 	R5, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-apagar_boneco_linha:
-	SUB 	R5, 1
-	JZ		apagar_boneco_fim
-	MOV		R4, boneco_tamanho	
-	MOVB	R4, [R4]				; Numero maximo de colunas
-	ADD 	R4, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-	ADD 	R1, 1
-	MOV		R2, R6
-apagar_boneco_coluna:
-	CALL 	escrever_pixel
-	ADD 	R2, 1
-	SUB 	R4, 1
-	JNZ 	apagar_boneco_coluna
-	JMP 	apagar_boneco_linha
-apagar_boneco_fim:
-	POP		R6
-	POP 	R5
-	POP 	R4
-	POP 	R3
-	POP 	R2
-	POP 	R1
-	RET
-
-escrever_robot:
-	PUSH	R1 						; Linha para funcao escrever_pixel
-	PUSH 	R2						; Coluna para funcao escrever_pixel
-	PUSH 	R3						; Aceso ou apagado para funcao escrever_pixel
-	PUSH 	R4						; Guardar coluna canto superior esquerdo
-	PUSH 	R5						; Valor de auxilio
-	PUSH 	R6						; Contador de colunas
-	PUSH 	R7						; Contador de linhas
-	PUSH 	R8						; Mascara
-	PUSH 	R9						; Posicao de desenho de tenista em memoria
-	SUB 	R1, 1
-	MOV 	R4, R2
-	MOV		R7, robot_tamanho	
-	ADD		R7, 1
-	MOVB	R7, [R7]				; Numero maximo de linhas
-	ADD 	R7, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-	MOV 	R9, robot_desenho
-escrever_robot_linha:
-	SUB 	R7, 1					; Subtrair 1 ao contador para verificar se existem mais linhas
-	JZ		escrever_robot_fim		; Caso tenham acabado as linhas, terminar
-	MOVB 	R5, [R9]
-	ADD 	R9, 1
-	MOV		R6, robot_tamanho	
-	MOVB	R6, [R6]				; Numero maximo de colunas
-	ADD 	R6, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-	ADD 	R1, 1
-	MOV 	R2, R4
-escrever_robot_coluna:
-	MOV 	R3, R5
-	MOV 	R8, 1
-	AND 	R3, R8					; Isolar bit de menor valor
-	CALL 	escrever_pixel
-	ADD 	R2, 1
-	SHR 	R5, 1					; Avancar para o proximo bit
-	SUB 	R6, 1					; Subtrair 1 ao contador para verificar se existem mais colunas
-	JNZ 	escrever_robot_coluna	; Caso haja mais colunas para desenhar, continuar
-	JMP 	escrever_robot_linha	; Caso tenha terminado a linha, terminar ciclo
-escrever_robot_fim:
-	POP 	R9
-	POP 	R8
-	POP 	R7
-	POP 	R6
-	POP 	R5
-	POP 	R4
-	POP 	R3
-	POP 	R2
-	POP 	R1
-	RET
-	
-apagar_robot:
-	PUSH	R1 						; Linha para funcao escrever_pixel
-	PUSH 	R2						; Coluna para funcao escrever_pixel
-	PUSH 	R3						; Apagado para funcao escrever_pixel
-	PUSH 	R4						; Valores de auxilio
-	PUSH 	R5
-	PUSH	R6
-	SUB 	R1, 1
-	MOV		R3, 0					; Apagar sempre o pixel
-	MOV		R6, R2
-	MOV		R5, robot_tamanho	
-	ADD		R5, 1
-	MOVB	R5, [R5]				; Numero maximo de linhas
-	ADD 	R5, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-apagar_robot_linha:
-	SUB 	R5, 1
-	JZ		apagar_robot_fim
-	MOV		R4, robot_tamanho	
-	MOVB	R4, [R4]				; Numero maximo de colunas
-	ADD 	R4, 1					; Adicionar um porque se realiza uma subtraccao (de 1) a mais
-	ADD 	R1, 1
-	MOV		R2, R6
-apagar_robot_coluna:
-	CALL 	escrever_pixel
-	ADD 	R2, 1
-	SUB 	R4, 1
-	JNZ 	apagar_robot_coluna
-	JMP 	apagar_robot_linha
-apagar_robot_fim:
-	POP		R6
-	POP 	R5
-	POP 	R4
-	POP 	R3
-	POP 	R2
-	POP 	R1
-	RET
-	
-processar_movimento:
+processar_movimento_boneco:
 	PUSH 	R1
 	PUSH 	R2
 	PUSH 	R3
@@ -418,6 +318,8 @@ processar_movimento:
 	PUSH	R7
 	PUSH	R8
 	PUSH	R9
+	PUSH	R10
+	MOV		R10, boneco
 	MOV		R3, BUFFER
 	MOVB 	R3, [R3]				; R3 possui a tecla carregada actualmente
 	MOV 	R2, BUFFER
@@ -448,10 +350,10 @@ processar_movimento:
 	ADD 	R2, R4					; Aplicar o deslocamento da coluna
 
 	MOV		R5, 21H					; 33 em hexadecimal, dimensao horizontal maxima do ecra (31) + erros na subtracção (subtrai +2)
-	MOV		R6, boneco_tamanho
+	MOV		R6, boneco
 	MOVB	R6, [R6]
 	SUB		R5, R6					; Obter coluna mais a direita possivel para canto superior esquerdo
-	MOV 	R6, robot_tamanho
+	MOV 	R6, robo
 	MOVB	R6, [R6]
 	SUB		R5, R6
 	CMP		R2, R5
@@ -463,7 +365,7 @@ falha_ver_horizontal:
 termina_ver_horizontal:
 
 	MOV		R5, 21H					; 33 em hexadecimal, dimensao vertical maxima do ecra (31) + erros na subtracção (subtrai +2)
-	MOV		R6, boneco_tamanho
+	MOV		R6, boneco
 	ADD		R6, 1
 	MOVB	R6, [R6]
 	SUB		R5, R6					; Obter linha mais a baixo possivel para canto superior esquerdo
@@ -480,19 +382,26 @@ termina_ver_vertical:
 	MOV		R9, R2					; Trocar R2 com R8
 	MOV		R2, R8
 	MOV		R8, R9
-	CALL	apagar_boneco			; Limpar boneco actual (para redesenhar)
+	PUSH	R8
+	MOV		R8, 0
+	CALL	desenhar_figura			; Limpar boneco actual (para redesenhar)
+	POP		R8
 	MOV		R9, R1					; Trocar R1 com R7
 	MOV		R1, R7
 	MOV		R7, R9
 	MOV		R9, R2					; Trocar R2 com R8
 	MOV		R2, R8
 	MOV		R8, R9
-	CALL 	escrever_boneco			; Escrever o novo boneco apos os deslocamentos
+	PUSH	R8
+	MOV		R8, 1
+	CALL 	desenhar_figura			; Escrever o novo boneco apos os deslocamentos
+	POP		R8
 	MOV 	R3, POS_B
 	MOVB	[R3], R1				; Guardar a linha actual em memoria
 	ADD		R3, 1
 	MOVB	[R3], R2				; Guardar a coluna actual em memoria
 movimento_fim:
+	POP		R10
 	POP		R9
 	POP		R8
 	POP		R7
@@ -505,14 +414,189 @@ movimento_fim:
 	RET
 
 reset:
+	PUSH	R1
+	PUSH	R2
+	CALL 	limpar_ecra				; Executar a limpeza de ecra para reiniciar
+	CALL	inicializar_boneco
+	CALL	inicializar_robos
+	MOV		R2, 010H
+	MOV		R1, BUFFER
+	MOVB	[R1], R2
+	MOV		R2, 1
+	MOV		R1, GERADOR
+	MOVB	[R1], R2
+	POP		R2
+	POP		R1
+	RET
+	
+inicializar_boneco:
 	PUSH 	R1
 	PUSH 	R2
-	CALL 	limpar_ecra				; Executar a limpeza de ecra para reiniciar
-	MOV 	R2, 0
+	PUSH	R8
+	PUSH	R10
+	MOV 	R2, 0					; Reinicializar posicao do boneco para 0,0
 	MOV 	R1, POS_B
-	MOV 	[R1], R2				; Reinicializar posicao do boneco para 0,0
+	MOV 	[R1], R2
 	MOV		R1, 0
-	CALL 	escrever_boneco			; Desenhar o boneco para inicializar
+	MOV		R8, 1
+	MOV 	R10, boneco
+	CALL 	desenhar_figura			; Desenhar o boneco para inicializar
+	POP		R10
+	POP		R8
 	POP 	R2
 	POP 	R1
 	RET
+	
+inicializar_robos:
+	PUSH	R1
+	PUSH	R2
+	PUSH	R8
+	PUSH	R10
+	MOV 	R10, robo				; Figura a utilizar e a do robo
+	MOV 	R2, 0717H				; Reinicializar posicao dos robos para 7(07H) e 23(17H)
+	MOV 	R1, POS_R
+	MOV		[R1], R2
+	
+	MOV		R2, 20H					; Reinicializar coluna dos robos, dependendo do seu tamanho
+	MOV		R1, robo
+	MOVB	R1, [R1]
+	SUB		R2, R1
+	MOV		R1, COL_R
+	MOVB	[R1], R2
+	
+	MOV		R1, POS_R
+	MOVB	R1, [R1]
+	MOV		R8, 1
+	CALL 	desenhar_figura			; Desenhar o boneco para inicializar
+	MOV 	R1, POS_R
+	ADD		R1, 1
+	MOVB	R1, [R1]
+	CALL 	desenhar_figura			; Desenhar o boneco para inicializar
+	POP		R10
+	POP		R8
+	POP		R2
+	POP		R1
+	RET
+	
+gerador:
+	PUSH	R1
+	PUSH	R2
+	MOV		R2, GERADOR
+	MOVB	R1, [R2]
+	SUB		R1, 1
+	JNZ		gerador_fim				; Caso nao seja 0, ainda pertence ao intervalo [1, 3] logo e valido
+	MOV		R1, 3					; Caso tenha dado 0, volta a 3
+gerador_fim:
+	MOVB	[R2], R1
+	POP		R2
+	POP		R1
+	RET
+	
+processar_movimento_robos:
+	PUSH	R1
+	PUSH	R2
+	PUSH	R3
+	PUSH	R8
+	PUSH	R10
+	MOV		R10, robo
+processar_movimento_robo1:
+	MOV		R1, FLAG_R
+	MOVB	R1, [R1]
+	AND		R1, R1
+	JZ		processar_movimento_robo2
+	MOV		R1, POS_R
+	MOVB	R1, [R1]
+	MOV		R2, COL_R
+	MOVB	R2, [R2]
+	MOV		R8, 0
+	CALL	desenhar_figura
+	MOV		R3, GERADOR
+	MOVB	R3, [R3]
+	SUB		R3, 2					; Gerador vai de 1 a 3, e neste caso da jeito ir de -1 a 1, para os movimentos aleatorios
+	MOV		R1, POS_R
+	MOVB	R1, [R1]
+	ADD		R1, R3
+	MOV		R2, COL_R
+	MOVB	R2, [R2]
+	MOV		R8, 1
+	CALL	desenhar_figura
+	MOV		R1, FLAG_R
+	MOV		R2, 0
+	MOVB	[R1], R2
+processar_movimento_robo2:
+	MOV		R1, FLAG_R
+	ADD		R1, 1
+	MOVB	R1, [R1]
+	AND		R1, R1
+	JZ		processar_movimento_robos_fim
+	MOV		R1, POS_R
+	ADD		R1, 1
+	MOVB	R1, [R1]
+	MOV		R2, COL_R
+	MOVB	R2, [R2]
+	MOV		R8, 0
+	CALL	desenhar_figura
+	MOV		R3, GERADOR
+	MOVB	R3, [R3]
+	SUB		R3, 2					; Gerador vai de 1 a 3, e neste caso da jeito ir de -1 a 1, para os movimentos aleatorios
+	MOV		R1, POS_R
+	ADD		R1, 1
+	MOVB	R1, [R1]
+	ADD		R1, R3
+	MOV		R2, COL_R
+	MOVB	R2, [R2]
+	MOV		R8, 1
+	CALL	desenhar_figura
+	MOV		R1, FLAG_R
+	ADD		R1, 1
+	MOV		R2, 0
+	MOVB	[R1], R2
+processar_movimento_robos_fim:
+	POP		R10
+	POP		R8
+	POP		R3
+	POP		R2
+	POP		R1
+	RET
+	
+processar_movimento_bolas:
+	RET
+	
+interrup1:
+	PUSH	R1
+	PUSH	R2
+	MOV		R1, GERADOR
+	MOVB	R1, [R1]
+	SUB		R1, 1
+	JZ 		interrup1_R1
+	SUB		R1, 1
+	JZ		interrup1_R2
+	JMP		interrup1_fim
+interrup1_R1:
+	MOV		R1, FLAG_R
+	MOV		R2, 1
+	MOVB	[R1], R2
+	JMP		interrup1_fim
+interrup1_R2:
+	MOV		R1, FLAG_R
+	ADD		R1, 1
+	MOV		R2, 1
+	MOVB	[R1], R2
+	JMP		interrup1_fim
+interrup1_fim:
+	POP		R2
+	POP		R1
+	RFE
+
+interrup2:
+	CALL	gerador					; Para aumentar a aleatoriedade do gerador, vamos executa-lo tambem nas interrupcoes da bola
+									; A interrupcao dos robos ja se encontra extensa (para uma interrupcao), logo nao se corre la
+									; Corre-se aqui e nao usando a flag da interrupcao para maximizar a aleatoriedade
+	PUSH	R1
+	PUSH	R2
+	MOV		R1, FLAG_B
+	MOV		R2, 1
+	MOVB	[R1], R2
+	POP		R2
+	POP		R1
+	RFE
