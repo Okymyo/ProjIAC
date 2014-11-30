@@ -13,9 +13,10 @@
 ; ESPECIFICACOES ALTERADAS:
 ; Movimento de robos (1)
 ;	O movimento nao se encontra limitado a 2 posicoes, podendo andar para cima e para baixo
-;	desde que nao haja colisao com outro robo
+;	desde que nao haja colisao com outro robo.
+;	Tem tambem limite superior e inferior, nao podendo sair do ecra
 ; Movimento de robos (2)
-; 	O movimento pode ocorrer mesmo que nao se encontre nenhuma bola em andamento
+; 	O movimento pode ocorrer mesmo que se encontre a bola em andamento
 ; *********************************************************************
 
 ; **********************************************************************
@@ -24,13 +25,16 @@
 
 BUFFER	EQU	5600H					; endereco onde e guardada a tecla
 POS_B	EQU 5650H					; endereco onde e guardada posicao do boneco (linha, coluna)
-POS_R	EQU	5700H					; endereco onde e guardada a posicao dos robos (linha robo1, linha robo2)
-COL_R	EQU	5710H					; endereco onde e guardada a coluna dos robos
-GERADOR	EQU	5750H					; endereco onde e guardado o valor gerado pelo gerador pseudo-aleatorio
-FLAG_B	EQU	5800H					; endereco onde e guardada a flag das bolas
-DIR_B	EQU	5810H					; endereco onde e guardada a direccao das bolas (B1, B2)
-FLAG_R	EQU	5820H					; endereco onde e guardada a flag dos robos
 
+POS_RS	EQU	5700H					; endereco onde e guardada a posicao dos robos (linha robo1, linha robo2)
+COL_RS	EQU	5710H					; endereco onde e guardada a coluna dos robos
+FLAG_RS	EQU	5720H					; endereco onde e guardada a flag dos robos
+GERADOR	EQU	5750H					; endereco onde e guardado o valor gerado pelo gerador pseudo-aleatorio
+POS_BS	EQU	5800H					; endereco onde e guardada a posicao das bolas
+DIR_BS	EQU	5810H					; endereco onde e guardada a direccao das bolas (B1, B2)
+FLAG_BS	EQU	5820H					; endereco onde e guardada a flag das bolas
+
+NULL	EQU	010H					; correspondente a tecla "nula"
 LINHA	EQU	8000H					; correspondente a linha 1 antes do ROL
 
 PSCR_I 	EQU 8000H
@@ -125,7 +129,6 @@ ciclo_principal:
 	CALL	gerador
 	CALL	processar_movimento_robos
 	CALL	processar_movimento_bolas
-	CALL	gerador
 	JMP		ciclo_principal
 	
 	
@@ -143,7 +146,7 @@ teclado:
 	MOV 	R3, PIN					; R3 com endereco de input do teclado
 	MOV		R4, 0					; R4 vazio, indica a coluna
 	MOV		R5, LINHA				; R5 guarda a linha verificada anteriormente
-	MOV		R6, 010H   				; R6 indica o caracter premido, 10 indica 'vazio'
+	MOV		R6, NULL   				; R6 indica o caracter premido, 10 indica 'vazio'
 	MOV 	R7, 10					; R7 com o valor a comparar
 	MOV		R8, 0FH					; R8 com mascara que isola bits de entrada do teclado
 teclado_ciclo:
@@ -259,9 +262,9 @@ escrever_fim:
 	RET
 	
 desenhar_figura:
-	PUSH	R1 						; Linha para funcao escrever_pixel
-	PUSH 	R2						; Coluna para funcao escrever_pixel
-	PUSH 	R3						; Aceso ou apagado para funcao escrever_pixel
+	PUSH	R1 						; Linha para rotina escrever_pixel
+	PUSH 	R2						; Coluna para rotina escrever_pixel
+	PUSH 	R3						; Aceso ou apagado para rotina escrever_pixel
 	PUSH 	R4						; Guardar coluna canto superior esquerdo
 	PUSH 	R5						; Valor de auxilio
 	PUSH 	R6						; Contador de colunas
@@ -419,9 +422,9 @@ reset:
 	CALL 	limpar_ecra				; Executar a limpeza de ecra para reiniciar
 	CALL	inicializar_boneco
 	CALL	inicializar_robos
-	MOV		R2, 010H
+	MOV		R2, NULL
 	MOV		R1, BUFFER
-	MOVB	[R1], R2
+	MOVB	[R1], R2				; Limpar o buffer para tecla nula
 	MOV		R2, 1
 	MOV		R1, GERADOR
 	MOVB	[R1], R2
@@ -454,21 +457,21 @@ inicializar_robos:
 	PUSH	R10
 	MOV 	R10, robo				; Figura a utilizar e a do robo
 	MOV 	R2, 0717H				; Reinicializar posicao dos robos para 7(07H) e 23(17H)
-	MOV 	R1, POS_R
+	MOV 	R1, POS_RS
 	MOV		[R1], R2
 	
 	MOV		R2, 20H					; Reinicializar coluna dos robos, dependendo do seu tamanho
 	MOV		R1, robo
 	MOVB	R1, [R1]
 	SUB		R2, R1
-	MOV		R1, COL_R
+	MOV		R1, COL_RS
 	MOVB	[R1], R2
 	
-	MOV		R1, POS_R
+	MOV		R1, POS_RS
 	MOVB	R1, [R1]
 	MOV		R8, 1
 	CALL 	desenhar_figura			; Desenhar o boneco para inicializar
-	MOV 	R1, POS_R
+	MOV 	R1, POS_RS
 	ADD		R1, 1
 	MOVB	R1, [R1]
 	CALL 	desenhar_figura			; Desenhar o boneco para inicializar
@@ -493,78 +496,148 @@ gerador_fim:
 	RET
 	
 processar_movimento_robos:
+	PUSH	R4
+	PUSH	R5
+	PUSH	R6
+processar_movimento_robo1:
+	MOV		R4, FLAG_RS
+	MOVB	R4, [R4]
+	AND		R4, R4
+	JZ		processar_movimento_robo2
+	MOV		R4, POS_RS
+	MOV		R5, FLAG_RS
+	MOV		R6, POS_RS
+	ADD		R6, 1
+	MOVB	R6, [R6]
+	CALL	processar_movimento_robo
+processar_movimento_robo2:
+	MOV		R4, FLAG_RS
+	ADD		R4, 1
+	MOVB	R4, [R4]
+	AND		R4, R4
+	JZ		processar_movimento_robos_fim
+	MOV		R4, POS_RS
+	ADD		R4, 1
+	MOV		R5, FLAG_RS
+	ADD		R5, 1
+	MOV		R6, POS_RS
+	MOVB	R6, [R6]
+	CALL	processar_movimento_robo
+processar_movimento_robos_fim:
+	POP		R6
+	POP		R5
+	POP		R4
+	RET
+	
+processar_movimento_robo:
 	PUSH	R1
 	PUSH	R2
 	PUSH	R3
-	PUSH	R8
+	PUSH	R4						; Endereco onde e guardada linha do robo
+	PUSH	R5						; Endereco onde e guardada a flag do robo
+	PUSH	R6						; Linha do outro robo
+	PUSH	R7						; Altura do robo, -1 (para obter localizacao e nao altura)
+	PUSH	R8						; Indica se apaga ou desenha, para a rotina desenhar_figura
+	PUSH	R9						; Valor de auxilio
 	PUSH	R10
-	MOV		R10, robo
-processar_movimento_robo1:
-	MOV		R1, FLAG_R
-	MOVB	R1, [R1]
-	AND		R1, R1
-	JZ		processar_movimento_robo2
-	MOV		R1, POS_R
-	MOVB	R1, [R1]
-	MOV		R2, COL_R
-	MOVB	R2, [R2]
+	MOV		R7, robo
+	ADD		R7, 1
+	MOVB	R7, [R7]
+	SUB		R7, 1
+	MOV		R10, robo				; Figura a desenhar/apagar sera o robo
+processar_movimento_robo_limpar:
+	MOV		R1, R4
+	MOVB	R1, [R1]				; Linha actual
+	MOV		R2, COL_RS
+	MOVB	R2, [R2]				; Coluna dos robos
 	MOV		R8, 0
 	CALL	desenhar_figura
+processar_movimento_robo_colisao:
 	MOV		R3, GERADOR
 	MOVB	R3, [R3]
 	SUB		R3, 2					; Gerador vai de 1 a 3, e neste caso da jeito ir de -1 a 1, para os movimentos aleatorios
-	MOV		R1, POS_R
-	MOVB	R1, [R1]
-	ADD		R1, R3
-	MOV		R2, COL_R
+	MOV		R1, R4
+	MOVB	R1, [R1]				; Ir buscar linha actual
+	ADD		R1, R3					; Aplicar movimento (-1 [subir], 0 [neutro] ou 1 [descer])
+		
+	MOV		R9, R6					
+	ADD		R9, R7					; Posicao do outro robo + altura = "linha" maxima para canto superior esquerdo do robo actual
+	CMP		R1, R9					; Verificar colisao no limite inferior
+	JZ		processar_movimento_robo_nada
+	MOV		R9, R6					
+	SUB		R9, R7					; Posicao do outro robo - altura = "linha" minima para canto superior esquerdo do robo actual
+	CMP		R1, R9					; Verificar colisao no limite superior
+	JZ		processar_movimento_robo_nada
+	MOV		R9, 0H				; Verificar se nao sai do ecra pelo limite superior (por cima do ecra)
+	CMP		R1, R9
+	JLT		processar_movimento_robo_nada
+	MOV		R9, 1FH					; Verificar se nao sai do ecra pelo limite superior (por baixo do ecra)
+	SUB		R9, R7
+	CMP		R1, R9
+	JLE		processar_movimento_robo_desenhar
+processar_movimento_robo_nada:
+	SUB		R1, R3					; Reverter a alteracao a linha
+processar_movimento_robo_desenhar:
+	MOV		R2, COL_RS
 	MOVB	R2, [R2]
 	MOV		R8, 1
 	CALL	desenhar_figura
-	MOV		R2, POS_R
+	MOV		R2, R4
 	MOVB	[R2], R1
-	MOV		R1, FLAG_R
+	MOV		R1, R5
 	MOV		R2, 0
 	MOVB	[R1], R2
-processar_movimento_robo2:
-	MOV		R1, FLAG_R
-	ADD		R1, 1
-	MOVB	R1, [R1]
-	AND		R1, R1
-	JZ		processar_movimento_robos_fim
-	MOV		R1, POS_R
-	ADD		R1, 1
-	MOVB	R1, [R1]
-	MOV		R2, COL_R
-	MOVB	R2, [R2]
-	MOV		R8, 0
-	CALL	desenhar_figura
-	MOV		R3, GERADOR
-	MOVB	R3, [R3]
-	SUB		R3, 2					; Gerador vai de 1 a 3, e neste caso da jeito ir de -1 a 1, para os movimentos aleatorios
-	MOV		R1, POS_R
-	ADD		R1, 1
-	MOVB	R1, [R1]
-	ADD		R1, R3
-	MOV		R2, COL_R
-	MOVB	R2, [R2]
-	MOV		R8, 1
-	CALL	desenhar_figura
-	MOV		R2, POS_R
-	ADD		R2, 1
-	MOVB	[R2], R1
-	MOV		R1, FLAG_R
-	ADD		R1, 1
-	MOV		R2, 0
-	MOVB	[R1], R2
-processar_movimento_robos_fim:
 	POP		R10
+	POP		R9
 	POP		R8
+	POP		R7
+	POP		R6
+	POP		R5
+	POP		R4
 	POP		R3
 	POP		R2
 	POP		R1
 	RET
 	
 processar_movimento_bolas:
+	PUSH	R4
+	PUSH	R5
+	PUSH	R6
+processar_movimento_bola1:
+	MOV		R4, FLAG_BS
+	MOVB	R4, [R4]
+	AND		R4, R4
+	JZ		processar_movimento_bola2
+	MOV		R4, POS_BS
+	MOV		R5, FLAG_BS
+	MOV		R6, DIR_BS
+	CALL	processar_movimento_bola
+processar_movimento_bola2:
+	MOV		R4, FLAG_BS
+	ADD		R4, 1
+	MOVB	R4, [R4]
+	AND		R4, R4
+	JZ		processar_movimento_bolas_fim
+	MOV		R4, POS_BS
+	ADD		R4, 2
+	MOV		R5, FLAG_BS
+	ADD		R5, 1
+	MOV		R6, DIR_BS
+	ADD		R6, 1
+	CALL	processar_movimento_bola
+processar_movimento_bolas_fim:
+	POP		R6
+	POP		R5
+	POP		R4
+	RET
+	
+processar_movimento_bola:
+	PUSH	R1						; Linha da bola, para rotina escrever_pixel
+	PUSH	R2						; Coluna da bola, para rotina escrever_pixel
+	PUSH	R3						; Aceso (1), para rotina escrever_pixel
+	POP		R3
+	POP		R2
+	POP		R1
 	RET
 	
 interrup1:
@@ -578,12 +651,12 @@ interrup1:
 	JZ		interrup1_R2
 	JMP		interrup1_fim
 interrup1_R1:
-	MOV		R1, FLAG_R
+	MOV		R1, FLAG_RS
 	MOV		R2, 1
 	MOVB	[R1], R2
 	JMP		interrup1_fim
 interrup1_R2:
-	MOV		R1, FLAG_R
+	MOV		R1, FLAG_RS
 	ADD		R1, 1
 	MOV		R2, 1
 	MOVB	[R1], R2
@@ -600,7 +673,7 @@ interrup2:
 									; Assim podem ocorrer varios "geradores" por loop
 	PUSH	R1
 	PUSH	R2
-	MOV		R1, FLAG_B
+	MOV		R1, FLAG_BS
 	MOV		R2, 1
 	MOVB	[R1], R2
 	POP		R2
