@@ -520,6 +520,8 @@ processar_movimento_robo1:
 	MOVB	R2, [R2]
 	MOV		R8, 1
 	CALL	desenhar_figura
+	MOV		R2, POS_R
+	MOVB	[R2], R1
 	MOV		R1, FLAG_R
 	MOV		R2, 0
 	MOVB	[R1], R2
@@ -547,6 +549,9 @@ processar_movimento_robo2:
 	MOVB	R2, [R2]
 	MOV		R8, 1
 	CALL	desenhar_figura
+	MOV		R2, POS_R
+	ADD		R2, 1
+	MOVB	[R2], R1
 	MOV		R1, FLAG_R
 	ADD		R1, 1
 	MOV		R2, 0
@@ -592,6 +597,7 @@ interrup2:
 	CALL	gerador					; Para aumentar a aleatoriedade do gerador, vamos executa-lo tambem nas interrupcoes da bola
 									; A interrupcao dos robos ja se encontra extensa (para uma interrupcao), logo nao se corre la
 									; Corre-se aqui e nao usando a flag da interrupcao para maximizar a aleatoriedade
+									; Assim podem ocorrer varios "geradores" por loop
 	PUSH	R1
 	PUSH	R2
 	MOV		R1, FLAG_B
