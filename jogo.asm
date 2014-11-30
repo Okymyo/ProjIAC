@@ -24,7 +24,7 @@
 ; **********************************************************************
 
 BUFFER	EQU	5600H					; endereco onde e guardada a tecla
-POS_B	EQU 5650H					; endereco onde e guardada posicao do boneco (linha, coluna)
+POS_JG	EQU 5650H					; endereco onde e guardada posicao do boneco (linha, coluna)
 
 POS_RS	EQU	5700H					; endereco onde e guardada a posicao dos robos (linha robo1, linha robo2)
 COL_RS	EQU	5710H					; endereco onde e guardada a coluna dos robos
@@ -332,9 +332,9 @@ processar_movimento_boneco:
 	JGE 	movimento_fim			; pois 10H (nula) e maior que todas as teclas premidas.
 									; Se a tecla premida for nula, sera maior ou igual, logo jump
 									; Se a tecla premida nao mudar, sera igual, logo jump.
-	MOV 	R1, POS_B
+	MOV 	R1, POS_JG
 	MOVB	R1, [R1]				; Guardar em R1 a linha actual
-	MOV 	R2, POS_B
+	MOV 	R2, POS_JG
 	ADD 	R2, 1
 	MOVB	R2, [R2]				; Guardar em R2 a coluna actual
 	
@@ -399,7 +399,7 @@ termina_ver_vertical:
 	MOV		R8, 1
 	CALL 	desenhar_figura			; Escrever o novo boneco apos os deslocamentos
 	POP		R8
-	MOV 	R3, POS_B
+	MOV 	R3, POS_JG
 	MOVB	[R3], R1				; Guardar a linha actual em memoria
 	ADD		R3, 1
 	MOVB	[R3], R2				; Guardar a coluna actual em memoria
@@ -422,6 +422,7 @@ reset:
 	CALL 	limpar_ecra				; Executar a limpeza de ecra para reiniciar
 	CALL	inicializar_boneco
 	CALL	inicializar_robos
+	CALL	inicializar_bolas
 	MOV		R2, NULL
 	MOV		R1, BUFFER
 	MOVB	[R1], R2				; Limpar o buffer para tecla nula
@@ -438,7 +439,7 @@ inicializar_boneco:
 	PUSH	R8
 	PUSH	R10
 	MOV 	R2, 0					; Reinicializar posicao do boneco para 0,0
-	MOV 	R1, POS_B
+	MOV 	R1, POS_JG
 	MOV 	[R1], R2
 	MOV		R1, 0
 	MOV		R8, 1
@@ -477,6 +478,14 @@ inicializar_robos:
 	CALL 	desenhar_figura			; Desenhar o boneco para inicializar
 	POP		R10
 	POP		R8
+	POP		R2
+	POP		R1
+	RET
+	
+inicializar_bolas:
+	PUSH	R1
+	PUSH	R2
+	MOV		R2, POS_BS
 	POP		R2
 	POP		R1
 	RET
@@ -603,27 +612,20 @@ processar_movimento_bolas:
 	PUSH	R4
 	PUSH	R5
 	PUSH	R6
-processar_movimento_bola1:
 	MOV		R4, FLAG_BS
 	MOVB	R4, [R4]
 	AND		R4, R4
-	JZ		processar_movimento_bola2
+	JZ		processar_movimento_bolas_fim
 	MOV		R4, POS_BS
 	MOV		R5, FLAG_BS
 	MOV		R6, DIR_BS
 	CALL	processar_movimento_bola
-processar_movimento_bola2:
-	MOV		R4, FLAG_BS
-	ADD		R4, 1
-	MOVB	R4, [R4]
-	AND		R4, R4
-	JZ		processar_movimento_bolas_fim
 	MOV		R4, POS_BS
 	ADD		R4, 2
 	MOV		R5, FLAG_BS
 	ADD		R5, 1
 	MOV		R6, DIR_BS
-	ADD		R6, 1
+	ADD		R6, 2
 	CALL	processar_movimento_bola
 processar_movimento_bolas_fim:
 	POP		R6
@@ -634,11 +636,58 @@ processar_movimento_bolas_fim:
 processar_movimento_bola:
 	PUSH	R1						; Linha da bola, para rotina escrever_pixel
 	PUSH	R2						; Coluna da bola, para rotina escrever_pixel
-	PUSH	R3						; Aceso (1), para rotina escrever_pixel
+	PUSH	R3						; Acender ou apagar, para rotina escrever_pixel, e valor de auxilio
+	PUSH	R7						; Valor de auxilio
+	PUSH	R8
+	MOV		R1, R4
+	MOVB	R1, [R1]
+	MOV		R2, R4
+	ADD		R2, 1
+	MOVB	R2, [R2]
+	MOV		R3, 0
+	CALL	escrever_pixel
+	MOV		R3, 1
+	SUB		R2, 1
+	JZ		processar_ponto			; Coluna anterior era 0, logo foi ponto para os robos
+	MOV		R8, [R6]
+	ADD		R1, R8
+	MOV		R7, 0
+	CMP		R1, R7
+	JLT		processar_movimento_bola_reflexo
+	MOV		R7, 1FH
+	CMP		R1, R7
+	JLE		fim_movimento_bola
+processar_movimento_bola_reflexo:
+	NEG		R8
+	MOV		[R6], R8
+	ADD		R1, R8					; Primeira vez para reverter o 'erro'
+	ADD		R1, R8					; Segunda vez para reflectir
+	JMP		fim_movimento_bola
+processar_ponto:
+	MOV		R3, 0
+	CALL	ponto
+	MOV		R2, 15H
+fim_movimento_bola:
+	CALL	escrever_pixel
+	MOV		R7, R4
+	MOVB	[R7], R1
+	ADD		R7, 1
+	MOVB	[R7], R2
+	MOV		R7, 0
+	MOVB	[R5], R7
+	POP		R8
+	POP		R7
 	POP		R3
 	POP		R2
 	POP		R1
 	RET
+	
+	
+ponto:
+	PUSH	R3
+	POP		R3
+	RET
+	
 	
 interrup1:
 	PUSH	R1
