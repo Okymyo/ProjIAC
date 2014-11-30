@@ -68,7 +68,7 @@ boneco:
 			
 PLACE		2100H
 robo:
-			STRING		3, 3		; Numero de colunas, linhas
+			STRING		3, 3, 2		; Numero de colunas, linhas, altura a que dispara (a contar de cima, sendo o primeiro bit o 1)
 			STRING		110b		; Desenho (invertido)
 			STRING		111b
 			STRING		110b
@@ -485,7 +485,11 @@ inicializar_robos:
 inicializar_bolas:
 	PUSH	R1
 	PUSH	R2
-	MOV		R2, POS_BS
+	MOV		R1, DIR_BS
+	MOV		R2, 02H
+	MOV		[R1], R2
+	ADD		R1, 2
+	MOV		[R1], R2
 	POP		R2
 	POP		R1
 	RET
@@ -612,22 +616,32 @@ processar_movimento_bolas:
 	PUSH	R4
 	PUSH	R5
 	PUSH	R6
+	PUSH	R7
 	MOV		R4, FLAG_BS
 	MOVB	R4, [R4]
 	AND		R4, R4
 	JZ		processar_movimento_bolas_fim
+processar_movimento_bola1:
 	MOV		R4, POS_BS
 	MOV		R5, FLAG_BS
 	MOV		R6, DIR_BS
+	MOV		R7, [R6]
+	SUB		R7, 2
+	;JZ		processar_movimento_bola2
 	CALL	processar_movimento_bola
+processar_movimento_bola2:
 	MOV		R4, POS_BS
 	ADD		R4, 2
 	MOV		R5, FLAG_BS
 	ADD		R5, 1
 	MOV		R6, DIR_BS
 	ADD		R6, 2
+	MOV		R7, [R6]
+	SUB		R7, 2
+	;JZ		processar_movimento_bolas_fim
 	CALL	processar_movimento_bola
 processar_movimento_bolas_fim:
+	POP		R7
 	POP		R6
 	POP		R5
 	POP		R4
@@ -639,6 +653,7 @@ processar_movimento_bola:
 	PUSH	R3						; Acender ou apagar, para rotina escrever_pixel, e valor de auxilio
 	PUSH	R7						; Valor de auxilio
 	PUSH	R8
+	CALL	disparar_bola
 	MOV		R1, R4
 	MOVB	R1, [R1]
 	MOV		R2, R4
@@ -656,7 +671,7 @@ processar_movimento_bola:
 	JLT		processar_movimento_bola_reflexo
 	MOV		R7, 1FH
 	CMP		R1, R7
-	JLE		fim_movimento_bola
+	JLE		desenhar_movimento_bola
 processar_movimento_bola_reflexo:
 	NEG		R8
 	MOV		[R6], R8
@@ -664,11 +679,13 @@ processar_movimento_bola_reflexo:
 	ADD		R1, R8					; Segunda vez para reflectir
 	JMP		fim_movimento_bola
 processar_ponto:
-	MOV		R3, 0
+	MOV		R7, 2
+	MOV		[R6], R7
 	CALL	ponto
-	MOV		R2, 15H
-fim_movimento_bola:
+	JMP		fim_movimento_bola
+desenhar_movimento_bola:
 	CALL	escrever_pixel
+fim_movimento_bola:
 	MOV		R7, R4
 	MOVB	[R7], R1
 	ADD		R7, 1
@@ -681,14 +698,50 @@ fim_movimento_bola:
 	POP		R2
 	POP		R1
 	RET
-	
-	
+
+disparar_bola:
+	PUSH	R1
+	PUSH	R2
+	PUSH	R4
+	PUSH	R5
+	PUSH	R6
+	MOV		R1, [R6]
+	SUB		R1, 2
+	JNZ		disparar_fim
+	MOV		R1, GERADOR
+	MOV		R1, [R1]
+	SUB		R1, 2
+	MOV		[R6], R1
+	MOV		R1, robo
+	ADD		R1, 2
+	MOVB	R1, [R1]
+	SUB		R1, 1
+	MOV		R2, COL_RS
+	MOVB	R2, [R2]
+	MOVB	[R4], R2
+	ADD		R4, 1
+	MOV		R2, POS_RS
+	MOV		R5, DIR_BS
+	SUB		R6, R5
+	ADD		R2, R6
+	MOVB	R2, [R2]
+	ADD		R2, R1
+	MOVB	[R4], R2
+disparar_fim:
+	POP		R6
+	POP		R5
+	POP		R4
+	POP		R2
+	POP		R1
+	RET
+
+
 ponto:
 	PUSH	R3
 	POP		R3
 	RET
-	
-	
+
+
 interrup1:
 	PUSH	R1
 	PUSH	R2
