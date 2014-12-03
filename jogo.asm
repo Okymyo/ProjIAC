@@ -142,7 +142,7 @@ ciclo_principal:
 	CALL	gerador
 	CALL	processar_movimento_bolas
 	CALL	processar_movimento_robos
-	CALL	ver_reiniciar
+	CALL	controlo
 	JMP		ciclo_principal
 	
 ; **********************************************************************
@@ -917,7 +917,7 @@ fim_movimento_bola:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Disparo de Bola -------------------------------------------
 ;* 
 ;* Description: trata interrupções do botão de pressão. 
 ;*
@@ -1012,9 +1012,9 @@ ponto_fim:
 	RET
 
 	
-;* -- Rotina de Serviço de Interrupção 1 -------------------------------------------
+;* -- Rotina de Alteracao de Pontuacao -------------------------------------------
 ;* 
-;* Description: Trata da interrupcao gerada pelo primeiro relogio 
+;* Description: Adiciona ou subtrai pontuacao ao score actual, e faz update aos displays
 ;*
 ;* Parameters: R3 (Pontos a somar)
 ;* Return: 	--  
@@ -1080,16 +1080,16 @@ alterar_pontuacao_fim:
 ;* Destroy: none
 ;* Notes: --
 
-ver_reiniciar:
+controlo:
 	PUSH	R1
 	PUSH	R2
 	PUSH	R3
 	PUSH	R4
 	MOV		R4, 0
-	JMP		ver_reiniciar_teste
-ver_reiniciar_ciclo:
+	JMP		controlo_teste
+controlo_ciclo:
 	CALL	teclado
-ver_reiniciar_teste:
+controlo_teste:
 	MOV		R1, BUFFER
 	MOVB	R1, [R1]
 	MOV		R2, BUFFER
@@ -1097,21 +1097,21 @@ ver_reiniciar_teste:
 	MOVB	R2, [R2]
 	MOV		R3, 0FH
 	CMP		R1, R3
-	JNZ		ver_reiniciar_fim
+	JNZ		controlo_fim
 	CMP		R1, R2
-	JZ		ver_reiniciar_fim
-ver_reiniciar_termina:
+	JZ		controlo_fim
+controlo_termina:
 	AND		R4, R4
-	JNZ		ver_reiniciar_reset
+	JNZ		controlo_reset
 	CALL	pintar_ecra
 	MOV		R4, 1
-	JMP		ver_reiniciar_ciclo
-ver_reiniciar_reset:
+	JMP		controlo_ciclo
+controlo_reset:
 	CALL	reset
 	MOV		R4, 0
-ver_reiniciar_fim:
+controlo_fim:
 	AND		R4, R4
-	JNZ		ver_reiniciar_ciclo
+	JNZ		controlo_ciclo
 	POP		R4
 	POP		R3
 	POP		R2
@@ -1120,7 +1120,7 @@ ver_reiniciar_fim:
 
 ;* -- Rotina de Serviço de Interrupção 1 -------------------------------------------
 ;* 
-;* Description: Trata da interrupcao gerada pelo primeiro relogio 
+;* Description: Trata da interrupcao gerada pelo primeiro relogio, alterando a flag FLAG_RS 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -1159,7 +1159,7 @@ interrup1_fim:
 	
 ;* -- Rotina de Serviço de Interrupção 2 -------------------------------------------
 ;* 
-;* Description: Trata da interrupcao gerada pelo segundo relogio 
+;* Description: Trata da interrupcao gerada pelo segundo relogio, alterando a flag FLAG_BS
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
