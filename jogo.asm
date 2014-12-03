@@ -273,7 +273,7 @@ ciclo_pintura:
 ;* 
 ;* Description: Altera o pixel escolhido, para o estado dado (aceso ou apagado) 
 ;*
-;* Parameters: 	--
+;* Parameters: 	R1 (linha), R2 (coluna), R3 (valor, aceso ou apagado)
 ;* Return: 	--  
 ;* Destroy: none
 ;* Notes: --
@@ -340,7 +340,7 @@ escrever_fim:
 ;* 
 ;* Description: Desenha a figura pedida, nas coordenadas dadas. 
 ;*
-;* Parameters: 	--
+;* Parameters: 	R1 (linha), R2 (coluna), R10 (endereco de memoria de figura a desenhar)
 ;* Return: 	--  
 ;* Destroy: none
 ;* Notes: --
@@ -697,7 +697,7 @@ processar_movimento_robo1:
 	MOV		R4, FLAG_RS
 	MOVB	R4, [R4]
 	AND		R4, R4
-	JZ		processar_movimento_robo2
+	JZ		processar_movimento_robo2			; Caso a flag do robo1 estiver a 0, avancar para robo2
 	MOV		R4, POS_RS
 	MOV		R5, FLAG_RS
 	MOV		R6, POS_RS
@@ -709,7 +709,7 @@ processar_movimento_robo2:
 	ADD		R4, 1
 	MOVB	R4, [R4]
 	AND		R4, R4
-	JZ		processar_movimento_robos_fim
+	JZ		processar_movimento_robos_fim		; Caso a flag do robo2 estiver a 0, terminar
 	MOV		R4, POS_RS
 	ADD		R4, 1
 	MOV		R5, FLAG_RS
@@ -728,7 +728,7 @@ processar_movimento_robos_fim:
 ;* 
 ;* Description: Sendo dada uma referencia a um robo, executa o seu movimento 
 ;*
-;* Parameters: 	--
+;* Parameters: 	R4 (endereco da linha do robo), R5 (endereco da flag do robo), R6 (linha do outro robo)
 ;* Return: 	--  
 ;* Destroy: none
 ;* Notes: --
@@ -821,14 +821,14 @@ processar_movimento_bolas:
 	MOV		R4, FLAG_BS
 	MOVB	R4, [R4]
 	AND		R4, R4
-	JZ		processar_movimento_bolas_fim
+	JZ		processar_movimento_bolas_fim		; Caso a flag de bolas esteja a 0, nao mover
 processar_movimento_bola1:
 	MOV		R4, POS_BS
 	MOV		R5, FLAG_BS
 	MOV		R6, DIR_BS
 	MOV		R7, [R6]
 	SUB		R7, 2
-	CALL	processar_movimento_bola
+	CALL	processar_movimento_bola			; Processar bola 1
 processar_movimento_bola2:
 	MOV		R4, POS_BS
 	ADD		R4, 2
@@ -836,7 +836,7 @@ processar_movimento_bola2:
 	ADD		R5, 1
 	MOV		R6, DIR_BS
 	ADD		R6, 2
-	CALL	processar_movimento_bola
+	CALL	processar_movimento_bola			; Processar bola 2
 processar_movimento_bolas_fim:
 	POP		R7
 	POP		R6
@@ -849,7 +849,7 @@ processar_movimento_bolas_fim:
 ;* 
 ;* Description: Sendo dada uma referência a uma bola, realiza o seu movimento. 
 ;*
-;* Parameters: 	--
+;* Parameters: 	R4 (endereco da posicao da bola), R5 (endereco da flag da bola), R6 (endereco da direccao da bola)
 ;* Return: 	--  
 ;* Destroy: none
 ;* Notes: --
@@ -862,7 +862,7 @@ processar_movimento_bola:
 	PUSH	R8
 	MOV		R8, [R6]
 	SUB		R8, 2
-	JNZ		processar_movimento_bola_continuar
+	JNZ		processar_movimento_bola_continuar	; Caso a direccao esteja a 2, "nulo", nao processar
 	CALL	disparar_bola
 processar_movimento_bola_continuar:
 	MOV		R1, R4
@@ -871,7 +871,7 @@ processar_movimento_bola_continuar:
 	ADD		R2, 1
 	MOVB	R2, [R2]
 	MOV		R3, 0
-	CALL	escrever_pixel
+	CALL	escrever_pixel						; Apagar a bola da sua posicao actual
 	MOV		R3, 1
 	SUB		R2, 1
 	MOV		R7, boneco
@@ -882,7 +882,7 @@ processar_movimento_bola_continuar:
 	MOVB	R8, [R8]
 	ADD		R7, R8
 	CMP		R2, R7
-	JLE		processar_ponto						; Coluna anterior era 0, logo foi ponto para os robos
+	JLE		processar_ponto						; Atingiu a coluna do tenista, logo comecar processamento do ponto
 	MOV		R8, [R6]
 	ADD		R1, R8
 	MOV		R7, 0
@@ -899,11 +899,11 @@ processar_movimento_bola_reflexo:
 	JMP		desenhar_movimento_bola
 processar_ponto:
 	MOV		R7, 2
-	MOV		[R6], R7
-	CALL	ponto
+	MOV		[R6], R7							; "Anular" direccao, para nao processar novamente depois de atingir esta coluna
+	CALL	ponto								; Caso tenha passado pela coluna do tenista, chamar a rotina dos pontos
 	JMP		fim_movimento_bola
 desenhar_movimento_bola:
-	CALL	escrever_pixel
+	CALL	escrever_pixel						; Escrever a bola na nova posicao
 fim_movimento_bola:
 	MOV		R7, R4
 	MOVB	[R7], R1
@@ -923,7 +923,7 @@ fim_movimento_bola:
 ;* 
 ;* Description: Dispara a bola caso nao tenha sido disparada 
 ;*
-;* Parameters: 	--
+;* Parameters: 	R4 (endereco da posicao da bola), R6 (endereco da direccao da bola)
 ;* Return: 	--  
 ;* Destroy: none
 ;* Notes: --
@@ -949,9 +949,9 @@ disparar_bola:
 	SUB		R6, R5
 	SHR		R6, 1
 	ADD		R2, R6
-	MOVB	R2, [R2]
+	MOVB	R2, [R2]							; Obter a linha do robo que dispara a bola "pedida"
 	ADD		R2, R1
-	MOVB	[R4], R2
+	MOVB	[R4], R2							; Definir linha da bola a disparar
 	
 	; Processar coluna de disparo
 	MOV		R2, COL_RS
@@ -1029,22 +1029,22 @@ alterar_pontuacao:
 	PUSH	R3
 	PUSH	R4
 	MOV		R1, PONT
-	MOVB	R1, [R1]
+	MOVB	R1, [R1]							; Guardar no R1 a pontuacao actual
 	
 	MOV		R2, 0FH
-	AND		R2, R1
+	AND		R2, R1								; Guardar em R2 as unidades actuais
 	
 	MOV		R4, 0F0H
-	AND		R1, R4
+	AND		R1, R4								; Guardar em R1 as dezenas actuais
 	
 	ADD		R2, R3
 	MOV		R3, 0AH
 	CMP		R2, R3
-	JGE		alterar_pontuacao_soma
+	JGE		alterar_pontuacao_soma				; Caso as unidades sejam superiores ou iguais a A, incrementar dezenas
 	MOV		R3, 0H
 	CMP		R2, R3
-	JLT		alterar_pontuacao_subtrai
-	JMP		alterar_pontuacao_fim
+	JLT		alterar_pontuacao_subtrai			; Caso sejam inferiores a 0, decrementar dezenas
+	JMP		alterar_pontuacao_fim				; Caso nao seja necessario alterar dezenas, terminar
 alterar_pontuacao_soma:
 	MOV		R3, 0AH
 	SUB		R2, R3
@@ -1064,9 +1064,9 @@ alterar_pontuacao_subtrai:
 alterar_pontuacao_fim:
 	ADD		R1, R2
 	MOV		R2, POUT1
-	MOVB	[R2], R1
+	MOVB	[R2], R1							; Escrever para os ecras a pontuacao actual
 	MOV		R2, PONT
-	MOVB	[R2], R1
+	MOVB	[R2], R1							; Guardar em memoria a pontuacao actual
 	POP		R4
 	POP		R3
 	POP		R2
@@ -1101,20 +1101,20 @@ controlo_teste:
 	MOVB	R2, [R2]
 	MOV		R3, 0FH
 	CMP		R1, R3
-	JNZ		controlo_fim
+	JNZ		controlo_fim						; Caso tecla actual seja nula, terminar
 	CMP		R1, R2
-	JZ		controlo_fim
+	JZ		controlo_fim						; Caso tecla acutal seja igual a anterior, terminar
 controlo_termina:
 	AND		R4, R4
-	JNZ		controlo_reset
+	JNZ		controlo_reset						; Caso tenha sido pressionado "F", terminar jogo
 	CALL	pintar_ecra
 	MOV		R4, 1
 	JMP		controlo_ciclo
 controlo_reset:
-	CALL	reset
+	CALL	reset								; Quando e premida pela segunda vez, dar reset ao jogo
 	MOV		R4, 0
 controlo_fim:
-	AND		R4, R4
+	AND		R4, R4								; Enquanto que R4 estiver a 1, prender no loop
 	JNZ		controlo_ciclo
 	POP		R4
 	POP		R3
@@ -1138,12 +1138,12 @@ interrup1:
 	PUSH	R1
 	PUSH	R2
 	MOV		R1, GERADOR
-	MOVB	R1, [R1]
+	MOVB	R1, [R1]							; Buscar o valor gerado aleatoriamente
 	SUB		R1, 1
-	JZ 		interrup1_R1
+	JZ 		interrup1_R1						; Caso esse valor seja 1, activa a flag do robo 1
 	SUB		R1, 1
-	JZ		interrup1_R2
-	JMP		interrup1_fim
+	JZ		interrup1_R2						; Caso seja 2, activa flag do robo 2
+	JMP		interrup1_fim						; Caso seja 3, nao activa flag
 interrup1_R1:
 	MOV		R1, FLAG_RS
 	MOV		R2, 1
@@ -1178,7 +1178,7 @@ interrup2:
 	PUSH	R2
 	MOV		R1, FLAG_BS
 	MOV		R2, 1
-	MOVB	[R1], R2
+	MOVB	[R1], R2							; Activa a flag das bolas
 	POP		R2
 	POP		R1
 	RFE
