@@ -237,6 +237,35 @@ ciclo_limpeza:
 	POP 	R2
 	POP 	R1
 	RET
+	
+;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* 
+;* Description: trata interrupções do botão de pressão. 
+;*
+;* Parameters: 	--
+;* Return: 	--  
+;* Destroy: none
+;* Notes: --
+	
+pintar_ecra:
+	PUSH 	R1
+	PUSH 	R2
+	PUSH 	R3
+	PUSH 	R4
+	MOV 	R1, PSCR_I 							; Primeiro endereco do ecra
+	MOV 	R2, PSCR_F							; Ultimo endereco do ecra
+	MOV		R3, 0FFFFH
+	MOV		R4, 1
+ciclo_pintura:
+	MOVB	[R1], R3							; Apagar o byte
+	ADD		R1, R4								; Avancar para o proximo byte
+	CMP 	R1, R2								; Comparar o endereco actual com o ultimo
+	JLE		ciclo_pintura						; Caso nao seja o ultimo, continuar a limpar
+	POP 	R4
+	POP 	R3
+	POP 	R2
+	POP 	R1
+	RET
 
 
 ;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
@@ -805,7 +834,7 @@ processar_movimento_bola2:
 	ADD		R5, 1
 	MOV		R6, DIR_BS
 	ADD		R6, 2
-	;CALL	processar_movimento_bola
+	CALL	processar_movimento_bola
 processar_movimento_bolas_fim:
 	POP		R7
 	POP		R6
@@ -814,9 +843,9 @@ processar_movimento_bolas_fim:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Processamento de Movimento de Bolas -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Sendo dada uma referência a uma bola, realiza o seu movimento. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -916,6 +945,7 @@ disparar_bola:
 	MOV		R2, POS_RS
 	MOV		R5, DIR_BS
 	SUB		R6, R5
+	SHR		R6, 1
 	ADD		R2, R6
 	MOVB	R2, [R2]
 	ADD		R2, R1
@@ -1024,11 +1054,11 @@ alterar_pontuacao_soma:
 	MOV		R1, 90H
 	JMP		alterar_pontuacao_fim
 alterar_pontuacao_subtrai:
-	MOV		R3, 10H
 	MOV		R2, 0
+	AND		R1, R1
+	JZ		alterar_pontuacao_fim
+	MOV		R3, 10H
 	SUB		R1, R3
-	JNZ		alterar_pontuacao_fim
-	MOV		R1, 0
 alterar_pontuacao_fim:
 	ADD		R1, R2
 	MOV		R2, POUT1
@@ -1054,8 +1084,12 @@ ver_reiniciar:
 	PUSH	R1
 	PUSH	R2
 	PUSH	R3
-	MOV		R3, 0
+	PUSH	R4
+	MOV		R4, 0
+	JMP		ver_reiniciar_teste
 ver_reiniciar_ciclo:
+	CALL	teclado
+ver_reiniciar_teste:
 	MOV		R1, BUFFER
 	MOVB	R1, [R1]
 	MOV		R2, BUFFER
@@ -1065,22 +1099,20 @@ ver_reiniciar_ciclo:
 	CMP		R1, R3
 	JNZ		ver_reiniciar_fim
 	CMP		R1, R2
-	JNZ		ver_reiniciar_fim
-	MOV		R1, FLAG_T
-	MOVB	R1, [R1]
+	JZ		ver_reiniciar_fim
 ver_reiniciar_termina:
-	CALL	teclado
-	AND		R3, R3
-	JNZ		ver_reiniciar_ciclo
-	CALL	limpar_ecra
-	MOV		R3, 1
+	AND		R4, R4
+	JNZ		ver_reiniciar_reset
+	CALL	pintar_ecra
+	MOV		R4, 1
 	JMP		ver_reiniciar_ciclo
 ver_reiniciar_reset:
 	CALL	reset
-	MOV		R3, 0
+	MOV		R4, 0
 ver_reiniciar_fim:
-	AND		R3, R3
+	AND		R4, R4
 	JNZ		ver_reiniciar_ciclo
+	POP		R4
 	POP		R3
 	POP		R2
 	POP		R1
