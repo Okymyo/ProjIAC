@@ -149,9 +149,10 @@ ciclo_principal:
 ; * Rotinas
 ; **********************************************************************
 	
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Varrimento de Teclado -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Detecta input, e guarda esse input no registo de memoria BUFFER.
+;*				Guarda a tecla anterior em BUFFER+1
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -209,9 +210,9 @@ teclado_fim:
 	RET
 	
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Limpar Ecra -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Apaga todo o ecra (apaga todos os pixeis). 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -238,9 +239,9 @@ ciclo_limpeza:
 	POP 	R1
 	RET
 	
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Pintar Ecra -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Pinta todo o ecra (acende todos os pixeis) 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -268,9 +269,9 @@ ciclo_pintura:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Escrever Pixel -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Altera o pixel escolhido, para o estado dado (aceso ou apagado) 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -335,9 +336,9 @@ escrever_fim:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Desenho de Figura -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Desenha a figura pedida, nas coordenadas dadas. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -395,9 +396,9 @@ desenhar_fim:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Processamento de Movimento de Boneco -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Realiza o movimento do boneco na direccao escolhida com o teclado. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -510,9 +511,9 @@ movimento_fim:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Reset -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Reinicializa todas as variaveis ao seu estado nulo, e chama as rotinas de inicializacao 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -541,9 +542,9 @@ reset:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Inicializacao de Boneco -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Inicializa o boneco na posicao 0. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -569,9 +570,9 @@ inicializar_boneco:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Inicializacao de Robos -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Inicializa a posicao dos robos para o seu ponto de comeco. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -610,9 +611,9 @@ inicializar_robos:
 	RET
 
 	
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Inicializacao de Bolas -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Inicializa a direccao das bolas a 2 (definida como a direccao "nula"). 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -632,9 +633,9 @@ inicializar_bolas:
 	RET
 
 	
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Inicializacao de Pontuacao -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Inicializa a pontuacao a 0. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -654,9 +655,10 @@ inicializar_pontuacao:
 	RET
 	
 	
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Gerador -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Altera o gerador para que este seja pseudo-aleatorio.
+;*				Pega no valor anteriormente presente e soma 1. Caso seja 4 (pois apenas vai de 1 a 3), fica 1
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -678,9 +680,9 @@ gerador_fim:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Processamento de Movimento de Robos -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Para cada um dos robos, chama a rotina de processamento de movimento de robo. 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -722,9 +724,9 @@ processar_movimento_robos_fim:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Processamento de Movimento de Robo -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Sendo dada uma referencia a um robo, executa o seu movimento 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -802,9 +804,9 @@ processar_movimento_robo_desenhar:
 	RET
 
 
-;* -- Rotina de Serviço de Interrupção 0 -------------------------------------------
+;* -- Rotina de Processamento de Movimento de Bolas -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Executa a rotina de movimento de bola para cada bola
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -843,7 +845,7 @@ processar_movimento_bolas_fim:
 	RET
 
 
-;* -- Rotina de Processamento de Movimento de Bolas -------------------------------------------
+;* -- Rotina de Processamento de Movimento de Bola -------------------------------------------
 ;* 
 ;* Description: Sendo dada uma referência a uma bola, realiza o seu movimento. 
 ;*
@@ -919,7 +921,7 @@ fim_movimento_bola:
 
 ;* -- Rotina de Disparo de Bola -------------------------------------------
 ;* 
-;* Description: trata interrupções do botão de pressão. 
+;* Description: Dispara a bola caso nao tenha sido disparada 
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
@@ -1071,9 +1073,11 @@ alterar_pontuacao_fim:
 	POP		R1
 	RET
 	
-;* -- Rotina de Serviço de Interrupção 1 -------------------------------------------
+;* -- Rotina de Controlo -------------------------------------------
 ;* 
-;* Description: Trata da interrupcao gerada pelo primeiro relogio 
+;* Description: Detecta caso o jogo tenha sido terminado
+;*				Isto acontece quando a tecla F e premida
+;*				Entra depois um loop infinito ate ser premida novamente
 ;*
 ;* Parameters: 	--
 ;* Return: 	--  
